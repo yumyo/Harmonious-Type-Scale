@@ -27,10 +27,12 @@ const htmlElements = ['title', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'blockquote',
 const TypographyScaleCalculator = () => {
   const [baseSize, setBaseSize] = useState(16);
   const [selectedScale, setSelectedScale] = useState('Perfect Fourth');
+  const [selectedMobileScale, setSelectedMobileScale] = useState('Perfect Fourth');
   const [positiveSteps, setPositiveSteps] = useState(5);
   const [negativeSteps, setNegativeSteps] = useState(2);
   const [selectedFont, setSelectedFont] = useState('');
   const [generatedScale, setGeneratedScale] = useState([]);
+  const [generatedMobileScale, setGeneratedMobileScale] = useState([]);
   const [isAdvanced, setIsAdvanced] = useState(false);
   const [cssOutput, setCssOutput] = useState('');
   const [elementSteps, setElementSteps] = useState(
@@ -54,7 +56,7 @@ const TypographyScaleCalculator = () => {
 
   useEffect(() => {
     generateScale();
-  }, [baseSize, mobileBaseSize, selectedScale, positiveSteps, negativeSteps, isAdvanced, elementSteps, useMobileScale, breakpoint]);
+  }, [baseSize, mobileBaseSize, selectedScale, selectedMobileScale, positiveSteps, negativeSteps, isAdvanced, elementSteps, useMobileScale, breakpoint]);
 
   useEffect(() => {
     if (selectedFont) {
@@ -70,12 +72,14 @@ const TypographyScaleCalculator = () => {
   };
 
   const generateScale = () => {
-    const scaleValue = scales[selectedScale];
-    const desktopScale = generateScaleForBaseSize(baseSize, scaleValue);
+    const desktopScaleValue = scales[selectedScale];
+    const mobileScaleValue = scales[selectedMobileScale];
+    const desktopScale = generateScaleForBaseSize(baseSize, desktopScaleValue);
     setGeneratedScale(desktopScale);
 
     if (useMobileScale) {
-      const mobileScale = generateScaleForBaseSize(mobileBaseSize, scaleValue);
+      const mobileScale = generateScaleForBaseSize(mobileBaseSize, mobileScaleValue);
+      setGeneratedMobileScale(mobileScale);
       generateCSSOutput(desktopScale, mobileScale);
     } else {
       generateCSSOutput(desktopScale);
@@ -264,6 +268,21 @@ const TypographyScaleCalculator = () => {
                   />
                 </div>
                 <div>
+                  <Label htmlFor="mobileScale">Mobile Scale</Label>
+                  <Select value={selectedMobileScale} onValueChange={setSelectedMobileScale}>
+                    <SelectTrigger>
+                      <SelectValue>{selectedMobileScale}</SelectValue>
+                    </SelectTrigger>
+                    <SelectContent>
+                      {Object.keys(scales).map((scale) => (
+                        <SelectItem key={scale} value={scale}>
+                          {scale}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div>
                   <Label htmlFor="breakpoint">Breakpoint (px)</Label>
                   <Input
                     id="breakpoint"
@@ -320,7 +339,7 @@ const TypographyScaleCalculator = () => {
                 {useMobileScale && (
                   <>
                     <h3 className="font-semibold mt-4">Mobile Scale</h3>
-                    {generateScaleForBaseSize(mobileBaseSize, scales[selectedScale]).map(({ step, size }) => (
+                    {generatedMobileScale.map(({ step, size }) => (
                       <div key={step} className="flex justify-between items-center">
                         <span>Step {step}</span>
                         <code>{size}</code>
@@ -352,8 +371,7 @@ const TypographyScaleCalculator = () => {
                       <h3 className="font-semibold mb-2">Mobile</h3>
                       {htmlElements.map((element) => {
                         const step = elementSteps[element];
-                        const mobileScale = generateScaleForBaseSize(mobileBaseSize, scales[selectedScale]);
-                        const scaleItem = mobileScale.find(item => item.step === step);
+                        const scaleItem = generatedMobileScale.find(item => item.step === step);
                         const Element = element;
                         return (
                           <Element key={element} style={{ fontSize: scaleItem ? scaleItem.size : 'inherit' }}>
