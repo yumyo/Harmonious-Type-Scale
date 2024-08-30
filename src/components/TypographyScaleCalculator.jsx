@@ -30,7 +30,7 @@ const TypographyScaleCalculator = () => {
   const { data: fonts, isLoading, error } = useQuery({
     queryKey: ['fonts'],
     queryFn: async () => {
-      const response = await fetch('https://www.googleapis.com/webfonts/v1/webfonts?key=YOUR_GOOGLE_FONTS_API_KEY&sort=popularity');
+      const response = await fetch('https://www.googleapis.com/webfonts/v1/webfonts?key=AIzaSyB98BqT3rpqG8H7kpskjkx6wHORf2_ZMyQ&sort=popularity');
       if (!response.ok) {
         throw new Error('Failed to fetch fonts');
       }
