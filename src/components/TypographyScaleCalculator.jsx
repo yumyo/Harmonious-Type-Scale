@@ -23,7 +23,8 @@ const scales = {
 const TypographyScaleCalculator = () => {
   const [baseSize, setBaseSize] = useState(16);
   const [selectedScale, setSelectedScale] = useState('Perfect Fourth');
-  const [steps, setSteps] = useState(9);
+  const [positiveSteps, setPositiveSteps] = useState(5);
+  const [negativeSteps, setNegativeSteps] = useState(2);
   const [selectedFont, setSelectedFont] = useState('');
   const [generatedScale, setGeneratedScale] = useState([]);
 
@@ -41,7 +42,7 @@ const TypographyScaleCalculator = () => {
 
   useEffect(() => {
     generateScale();
-  }, [baseSize, selectedScale, steps]);
+  }, [baseSize, selectedScale, positiveSteps, negativeSteps]);
 
   useEffect(() => {
     if (selectedFont) {
@@ -54,14 +55,23 @@ const TypographyScaleCalculator = () => {
 
   const generateScale = () => {
     const scaleValue = scales[selectedScale];
-    const middleStep = Math.floor(steps / 2);
     const newScale = [];
 
-    for (let i = 0; i < steps; i++) {
-      const stepDiff = i - middleStep;
-      const size = baseSize * Math.pow(scaleValue, stepDiff);
+    // Generate negative steps
+    for (let i = negativeSteps; i > 0; i--) {
+      const size = baseSize * Math.pow(scaleValue, -i);
       const clampedSize = `clamp(${size * 0.75}px, ${size / 16}rem, ${size * 1.25}px)`;
-      newScale.push({ step: i - middleStep, size: clampedSize });
+      newScale.push({ step: -i, size: clampedSize });
+    }
+
+    // Add base size (step 0)
+    newScale.push({ step: 0, size: `${baseSize}px` });
+
+    // Generate positive steps
+    for (let i = 1; i <= positiveSteps; i++) {
+      const size = baseSize * Math.pow(scaleValue, i);
+      const clampedSize = `clamp(${size * 0.75}px, ${size / 16}rem, ${size * 1.25}px)`;
+      newScale.push({ step: i, size: clampedSize });
     }
 
     setGeneratedScale(newScale);
@@ -109,14 +119,25 @@ const TypographyScaleCalculator = () => {
               </Select>
             </div>
             <div>
-              <Label htmlFor="steps">Number of Steps</Label>
+              <Label htmlFor="positiveSteps">Positive Steps</Label>
               <Slider
-                id="steps"
-                min={3}
-                max={15}
-                step={2}
-                value={[steps]}
-                onValueChange={(value) => setSteps(value[0])}
+                id="positiveSteps"
+                min={1}
+                max={10}
+                step={1}
+                value={[positiveSteps]}
+                onValueChange={(value) => setPositiveSteps(value[0])}
+              />
+            </div>
+            <div>
+              <Label htmlFor="negativeSteps">Negative Steps</Label>
+              <Slider
+                id="negativeSteps"
+                min={0}
+                max={5}
+                step={1}
+                value={[negativeSteps]}
+                onValueChange={(value) => setNegativeSteps(value[0])}
               />
             </div>
             <div>
