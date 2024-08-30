@@ -7,6 +7,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { Slider } from "@/components/ui/slider";
+import { Switch } from "@/components/ui/switch";
 import { toast } from "sonner";
 
 const scales = {
@@ -27,6 +28,8 @@ const TypographyScaleCalculator = () => {
   const [negativeSteps, setNegativeSteps] = useState(2);
   const [selectedFont, setSelectedFont] = useState('');
   const [generatedScale, setGeneratedScale] = useState([]);
+  const [isAdvanced, setIsAdvanced] = useState(false);
+  const [totalSteps, setTotalSteps] = useState(7); // Default to 7 (5 positive + 2 negative)
 
   const { data: fonts, isLoading, error } = useQuery({
     queryKey: ['fonts'],
@@ -42,7 +45,7 @@ const TypographyScaleCalculator = () => {
 
   useEffect(() => {
     generateScale();
-  }, [baseSize, selectedScale, positiveSteps, negativeSteps]);
+  }, [baseSize, selectedScale, positiveSteps, negativeSteps, isAdvanced, totalSteps]);
 
   useEffect(() => {
     if (selectedFont) {
@@ -53,25 +56,48 @@ const TypographyScaleCalculator = () => {
     }
   }, [selectedFont]);
 
+  const nthRoot = (n, degree) => {
+    return Math.pow(n, 1 / degree);
+  };
+
   const generateScale = () => {
     const scaleValue = scales[selectedScale];
     const newScale = [];
 
-    // Generate negative steps
-    for (let i = negativeSteps; i > 0; i--) {
-      const size = baseSize * Math.pow(scaleValue, -i);
-      const clampedSize = `clamp(${size * 0.75}px, ${size / 16}rem, ${size * 1.25}px)`;
-      newScale.push({ step: -i, size: clampedSize });
-    }
+    if (isAdvanced) {
+      let a = baseSize;
+      const b = baseSize;
+      const ratio = scaleValue;
+      const scaleSteps = totalSteps;
 
-    // Add base size (step 0)
-    newScale.push({ step: 0, size: `${baseSize}px` });
+      for (let step = -Math.floor(totalSteps / 2); step <= Math.floor(totalSteps / 2); step++) {
+        if (step < 0) {
+          a = a / nthRoot(ratio, scaleSteps);
+        } else if (step === 0) {
+          a = b;
+        } else {
+          a = a * nthRoot(ratio, scaleSteps);
+        }
+        const clampedSize = `clamp(${a * 0.75}px, ${a / 16}rem, ${a * 1.25}px)`;
+        newScale.push({ step, size: clampedSize });
+      }
+    } else {
+      // Generate negative steps
+      for (let i = negativeSteps; i > 0; i--) {
+        const size = baseSize * Math.pow(scaleValue, -i);
+        const clampedSize = `clamp(${size * 0.75}px, ${size / 16}rem, ${size * 1.25}px)`;
+        newScale.push({ step: -i, size: clampedSize });
+      }
 
-    // Generate positive steps
-    for (let i = 1; i <= positiveSteps; i++) {
-      const size = baseSize * Math.pow(scaleValue, i);
-      const clampedSize = `clamp(${size * 0.75}px, ${size / 16}rem, ${size * 1.25}px)`;
-      newScale.push({ step: i, size: clampedSize });
+      // Add base size (step 0)
+      newScale.push({ step: 0, size: `${baseSize}px` });
+
+      // Generate positive steps
+      for (let i = 1; i <= positiveSteps; i++) {
+        const size = baseSize * Math.pow(scaleValue, i);
+        const clampedSize = `clamp(${size * 0.75}px, ${size / 16}rem, ${size * 1.25}px)`;
+        newScale.push({ step: i, size: clampedSize });
+      }
     }
 
     setGeneratedScale(newScale);
@@ -93,6 +119,15 @@ const TypographyScaleCalculator = () => {
           <CardDescription>Generate a responsive typography scale using CSS clamp and modular scales</CardDescription>
         </CardHeader>
         <CardContent>
+          <div className="flex items-center space-x-2 mb-4">
+            <Switch
+              id="advanced-mode"
+              checked={isAdvanced}
+              onCheckedChange={setIsAdvanced}
+            />
+            <Label htmlFor="advanced-mode">Advanced Mode</Label>
+          </div>
+
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
               <Label htmlFor="baseSize">Base Size (px)</Label>
@@ -118,28 +153,44 @@ const TypographyScaleCalculator = () => {
                 </SelectContent>
               </Select>
             </div>
-            <div>
-              <Label htmlFor="positiveSteps">Positive Steps</Label>
-              <Slider
-                id="positiveSteps"
-                min={1}
-                max={10}
-                step={1}
-                value={[positiveSteps]}
-                onValueChange={(value) => setPositiveSteps(value[0])}
-              />
-            </div>
-            <div>
-              <Label htmlFor="negativeSteps">Negative Steps</Label>
-              <Slider
-                id="negativeSteps"
-                min={0}
-                max={5}
-                step={1}
-                value={[negativeSteps]}
-                onValueChange={(value) => setNegativeSteps(value[0])}
-              />
-            </div>
+            {isAdvanced ? (
+              <div>
+                <Label htmlFor="totalSteps">Total Steps</Label>
+                <Slider
+                  id="totalSteps"
+                  min={3}
+                  max={15}
+                  step={2}
+                  value={[totalSteps]}
+                  onValueChange={(value) => setTotalSteps(value[0])}
+                />
+              </div>
+            ) : (
+              <>
+                <div>
+                  <Label htmlFor="positiveSteps">Positive Steps</Label>
+                  <Slider
+                    id="positiveSteps"
+                    min={1}
+                    max={10}
+                    step={1}
+                    value={[positiveSteps]}
+                    onValueChange={(value) => setPositiveSteps(value[0])}
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="negativeSteps">Negative Steps</Label>
+                  <Slider
+                    id="negativeSteps"
+                    min={0}
+                    max={5}
+                    step={1}
+                    value={[negativeSteps]}
+                    onValueChange={(value) => setNegativeSteps(value[0])}
+                  />
+                </div>
+              </>
+            )}
             <div>
               <Label htmlFor="font">Font</Label>
               <Select value={selectedFont} onValueChange={setSelectedFont}>
