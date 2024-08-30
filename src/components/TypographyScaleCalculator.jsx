@@ -33,6 +33,9 @@ const TypographyScaleCalculator = () => {
   const [generatedScale, setGeneratedScale] = useState([]);
   const [isAdvanced, setIsAdvanced] = useState(false);
   const [cssOutput, setCssOutput] = useState('');
+  const [elementSteps, setElementSteps] = useState(
+    Object.fromEntries(htmlElements.map((element, index) => [element, index - 2]))
+  );
 
   const { data: fonts, isLoading, error } = useQuery({
     queryKey: ['fonts'],
@@ -48,7 +51,7 @@ const TypographyScaleCalculator = () => {
 
   useEffect(() => {
     generateScale();
-  }, [baseSize, selectedScale, positiveSteps, negativeSteps, isAdvanced]);
+  }, [baseSize, selectedScale, positiveSteps, negativeSteps, isAdvanced, elementSteps]);
 
   useEffect(() => {
     if (selectedFont) {
@@ -114,9 +117,12 @@ const TypographyScaleCalculator = () => {
     });
     css += '}\n\n';
 
-    htmlElements.forEach((element, index) => {
-      const step = scale[index] ? scale[index].step : 0;
-      css += `${element} {\n  font-size: var(--step-${step});\n}\n\n`;
+    htmlElements.forEach((element) => {
+      const step = elementSteps[element];
+      const scaleItem = scale.find(item => item.step === step);
+      if (scaleItem) {
+        css += `${element} {\n  font-size: var(--step-${step});\n}\n\n`;
+      }
     });
 
     setCssOutput(css);
@@ -125,6 +131,10 @@ const TypographyScaleCalculator = () => {
   const handleSave = () => {
     // TODO: Implement save functionality with GitHub auth
     toast.success("Scale saved successfully!");
+  };
+
+  const handleElementStepChange = (element, step) => {
+    setElementSteps(prev => ({ ...prev, [element]: step }));
   };
 
   if (isLoading) return <div>Loading fonts...</div>;
@@ -211,6 +221,32 @@ const TypographyScaleCalculator = () => {
             </div>
           </div>
 
+          <div className="mt-6">
+            <h3 className="text-lg font-semibold mb-2">Element Step Assignment</h3>
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+              {htmlElements.map((element) => (
+                <div key={element}>
+                  <Label htmlFor={`step-${element}`}>{element}</Label>
+                  <Select
+                    value={elementSteps[element].toString()}
+                    onValueChange={(value) => handleElementStepChange(element, parseInt(value))}
+                  >
+                    <SelectTrigger id={`step-${element}`}>
+                      <SelectValue>{elementSteps[element]}</SelectValue>
+                    </SelectTrigger>
+                    <SelectContent>
+                      {generatedScale.map(({ step }) => (
+                        <SelectItem key={step} value={step.toString()}>
+                          {step}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              ))}
+            </div>
+          </div>
+
           <Tabs defaultValue="scale" className="mt-6">
             <TabsList>
               <TabsTrigger value="scale">Generated Scale</TabsTrigger>
@@ -230,11 +266,13 @@ const TypographyScaleCalculator = () => {
             <TabsContent value="preview">
               <div style={{ fontFamily: selectedFont }}>
                 <h2 className="text-2xl font-bold mb-4">Font Preview: {selectedFont}</h2>
-                {generatedScale.map(({ step, size }, index) => {
-                  const Element = htmlElements[index] || 'p';
+                {htmlElements.map((element) => {
+                  const step = elementSteps[element];
+                  const scaleItem = generatedScale.find(item => item.step === step);
+                  const Element = element;
                   return (
-                    <Element key={step} style={{ fontSize: size }}>
-                      {Element}: The quick brown fox jumps over the lazy dog
+                    <Element key={element} style={{ fontSize: scaleItem ? scaleItem.size : 'inherit' }}>
+                      {element}: The quick brown fox jumps over the lazy dog
                     </Element>
                   );
                 })}
