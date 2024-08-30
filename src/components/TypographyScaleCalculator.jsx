@@ -9,6 +9,7 @@ import { Label } from "@/components/ui/label";
 import { Slider } from "@/components/ui/slider";
 import { Switch } from "@/components/ui/switch";
 import { toast } from "sonner";
+import { Textarea } from "@/components/ui/textarea";
 
 const scales = {
   'Minor Second': 1.067,
@@ -21,6 +22,8 @@ const scales = {
   'Golden Ratio': 1.618
 };
 
+const htmlElements = ['title', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'blockquote', 'p', 'caption', 'small', 'micro'];
+
 const TypographyScaleCalculator = () => {
   const [baseSize, setBaseSize] = useState(16);
   const [selectedScale, setSelectedScale] = useState('Perfect Fourth');
@@ -29,6 +32,7 @@ const TypographyScaleCalculator = () => {
   const [selectedFont, setSelectedFont] = useState('');
   const [generatedScale, setGeneratedScale] = useState([]);
   const [isAdvanced, setIsAdvanced] = useState(false);
+  const [cssOutput, setCssOutput] = useState('');
 
   const { data: fonts, isLoading, error } = useQuery({
     queryKey: ['fonts'],
@@ -77,14 +81,14 @@ const TypographyScaleCalculator = () => {
         } else {
           a = a * nthRoot(ratio, totalSteps);
         }
-        const clampedSize = `clamp(${a * 0.75}px, ${a / 16}rem, ${a * 1.25}px)`;
+        const clampedSize = `clamp(${(a * 0.75).toFixed(2)}px, ${(a / 16).toFixed(2)}rem, ${(a * 1.25).toFixed(2)}px)`;
         newScale.push({ step, size: clampedSize });
       }
     } else {
       // Generate negative steps
       for (let i = negativeSteps; i > 0; i--) {
         const size = baseSize * Math.pow(scaleValue, -i);
-        const clampedSize = `clamp(${size * 0.75}px, ${size / 16}rem, ${size * 1.25}px)`;
+        const clampedSize = `clamp(${(size * 0.75).toFixed(2)}px, ${(size / 16).toFixed(2)}rem, ${(size * 1.25).toFixed(2)}px)`;
         newScale.push({ step: -i, size: clampedSize });
       }
 
@@ -94,12 +98,28 @@ const TypographyScaleCalculator = () => {
       // Generate positive steps
       for (let i = 1; i <= positiveSteps; i++) {
         const size = baseSize * Math.pow(scaleValue, i);
-        const clampedSize = `clamp(${size * 0.75}px, ${size / 16}rem, ${size * 1.25}px)`;
+        const clampedSize = `clamp(${(size * 0.75).toFixed(2)}px, ${(size / 16).toFixed(2)}rem, ${(size * 1.25).toFixed(2)}px)`;
         newScale.push({ step: i, size: clampedSize });
       }
     }
 
     setGeneratedScale(newScale);
+    generateCSSOutput(newScale);
+  };
+
+  const generateCSSOutput = (scale) => {
+    let css = ':root {\n';
+    scale.forEach(({ step, size }) => {
+      css += `  --step-${step}: ${size};\n`;
+    });
+    css += '}\n\n';
+
+    htmlElements.forEach((element, index) => {
+      const step = scale[index] ? scale[index].step : 0;
+      css += `${element} {\n  font-size: var(--step-${step});\n}\n\n`;
+    });
+
+    setCssOutput(css);
   };
 
   const handleSave = () => {
@@ -157,7 +177,7 @@ const TypographyScaleCalculator = () => {
               <Slider
                 id="positiveSteps"
                 min={1}
-                max={10}
+                max={isAdvanced ? 36 : 10}
                 step={1}
                 value={[positiveSteps]}
                 onValueChange={(value) => setPositiveSteps(value[0])}
@@ -168,7 +188,7 @@ const TypographyScaleCalculator = () => {
               <Slider
                 id="negativeSteps"
                 min={0}
-                max={5}
+                max={isAdvanced ? 12 : 5}
                 step={1}
                 value={[negativeSteps]}
                 onValueChange={(value) => setNegativeSteps(value[0])}
@@ -195,6 +215,7 @@ const TypographyScaleCalculator = () => {
             <TabsList>
               <TabsTrigger value="scale">Generated Scale</TabsTrigger>
               <TabsTrigger value="preview">Preview</TabsTrigger>
+              <TabsTrigger value="css">CSS Output</TabsTrigger>
             </TabsList>
             <TabsContent value="scale">
               <div className="space-y-2">
@@ -209,12 +230,22 @@ const TypographyScaleCalculator = () => {
             <TabsContent value="preview">
               <div style={{ fontFamily: selectedFont }}>
                 <h2 className="text-2xl font-bold mb-4">Font Preview: {selectedFont}</h2>
-                {generatedScale.map(({ step, size }) => (
-                  <p key={step} style={{ fontSize: size }}>
-                    Typography Scale Step {step}: The quick brown fox jumps over the lazy dog
-                  </p>
-                ))}
+                {generatedScale.map(({ step, size }, index) => {
+                  const Element = htmlElements[index] || 'p';
+                  return (
+                    <Element key={step} style={{ fontSize: size }}>
+                      {Element}: The quick brown fox jumps over the lazy dog
+                    </Element>
+                  );
+                })}
               </div>
+            </TabsContent>
+            <TabsContent value="css">
+              <Textarea
+                value={cssOutput}
+                readOnly
+                className="w-full h-64 font-mono text-sm"
+              />
             </TabsContent>
           </Tabs>
 
