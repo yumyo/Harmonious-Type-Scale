@@ -29,7 +29,6 @@ const TypographyScaleCalculator = () => {
   const [selectedFont, setSelectedFont] = useState('');
   const [generatedScale, setGeneratedScale] = useState([]);
   const [isAdvanced, setIsAdvanced] = useState(false);
-  const [totalSteps, setTotalSteps] = useState(7); // Default to 7 (5 positive + 2 negative)
 
   const { data: fonts, isLoading, error } = useQuery({
     queryKey: ['fonts'],
@@ -45,7 +44,7 @@ const TypographyScaleCalculator = () => {
 
   useEffect(() => {
     generateScale();
-  }, [baseSize, selectedScale, positiveSteps, negativeSteps, isAdvanced, totalSteps]);
+  }, [baseSize, selectedScale, positiveSteps, negativeSteps, isAdvanced]);
 
   useEffect(() => {
     if (selectedFont) {
@@ -63,20 +62,20 @@ const TypographyScaleCalculator = () => {
   const generateScale = () => {
     const scaleValue = scales[selectedScale];
     const newScale = [];
+    const totalSteps = positiveSteps + negativeSteps + 1; // +1 for the base step
 
     if (isAdvanced) {
       let a = baseSize;
       const b = baseSize;
       const ratio = scaleValue;
-      const scaleSteps = totalSteps;
 
-      for (let step = -Math.floor(totalSteps / 2); step <= Math.floor(totalSteps / 2); step++) {
+      for (let step = -negativeSteps; step <= positiveSteps; step++) {
         if (step < 0) {
-          a = a / nthRoot(ratio, scaleSteps);
+          a = a / nthRoot(ratio, totalSteps);
         } else if (step === 0) {
           a = b;
         } else {
-          a = a * nthRoot(ratio, scaleSteps);
+          a = a * nthRoot(ratio, totalSteps);
         }
         const clampedSize = `clamp(${a * 0.75}px, ${a / 16}rem, ${a * 1.25}px)`;
         newScale.push({ step, size: clampedSize });
@@ -153,44 +152,28 @@ const TypographyScaleCalculator = () => {
                 </SelectContent>
               </Select>
             </div>
-            {isAdvanced ? (
-              <div>
-                <Label htmlFor="totalSteps">Total Steps</Label>
-                <Slider
-                  id="totalSteps"
-                  min={3}
-                  max={15}
-                  step={2}
-                  value={[totalSteps]}
-                  onValueChange={(value) => setTotalSteps(value[0])}
-                />
-              </div>
-            ) : (
-              <>
-                <div>
-                  <Label htmlFor="positiveSteps">Positive Steps</Label>
-                  <Slider
-                    id="positiveSteps"
-                    min={1}
-                    max={10}
-                    step={1}
-                    value={[positiveSteps]}
-                    onValueChange={(value) => setPositiveSteps(value[0])}
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="negativeSteps">Negative Steps</Label>
-                  <Slider
-                    id="negativeSteps"
-                    min={0}
-                    max={5}
-                    step={1}
-                    value={[negativeSteps]}
-                    onValueChange={(value) => setNegativeSteps(value[0])}
-                  />
-                </div>
-              </>
-            )}
+            <div>
+              <Label htmlFor="positiveSteps">Positive Steps</Label>
+              <Slider
+                id="positiveSteps"
+                min={1}
+                max={10}
+                step={1}
+                value={[positiveSteps]}
+                onValueChange={(value) => setPositiveSteps(value[0])}
+              />
+            </div>
+            <div>
+              <Label htmlFor="negativeSteps">Negative Steps</Label>
+              <Slider
+                id="negativeSteps"
+                min={0}
+                max={5}
+                step={1}
+                value={[negativeSteps]}
+                onValueChange={(value) => setNegativeSteps(value[0])}
+              />
+            </div>
             <div>
               <Label htmlFor="font">Font</Label>
               <Select value={selectedFont} onValueChange={setSelectedFont}>
