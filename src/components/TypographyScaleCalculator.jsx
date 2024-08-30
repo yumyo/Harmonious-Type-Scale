@@ -27,10 +27,13 @@ const TypographyScaleCalculator = () => {
   const [selectedFont, setSelectedFont] = useState('');
   const [generatedScale, setGeneratedScale] = useState([]);
 
-  const { data: fonts } = useQuery({
+  const { data: fonts, isLoading, error } = useQuery({
     queryKey: ['fonts'],
     queryFn: async () => {
-      const response = await fetch('https://www.googleapis.com/webfonts/v1/webfonts?key=YOUR_GOOGLE_FONTS_API_KEY');
+      const response = await fetch('https://www.googleapis.com/webfonts/v1/webfonts?key=YOUR_GOOGLE_FONTS_API_KEY&sort=popularity');
+      if (!response.ok) {
+        throw new Error('Failed to fetch fonts');
+      }
       const data = await response.json();
       return data.items.map(font => font.family);
     }
@@ -39,6 +42,15 @@ const TypographyScaleCalculator = () => {
   useEffect(() => {
     generateScale();
   }, [baseSize, selectedScale, steps]);
+
+  useEffect(() => {
+    if (selectedFont) {
+      const link = document.createElement('link');
+      link.href = `https://fonts.googleapis.com/css?family=${selectedFont.replace(' ', '+')}`;
+      link.rel = 'stylesheet';
+      document.head.appendChild(link);
+    }
+  }, [selectedFont]);
 
   const generateScale = () => {
     const scaleValue = scales[selectedScale];
@@ -59,6 +71,9 @@ const TypographyScaleCalculator = () => {
     // TODO: Implement save functionality with GitHub auth
     toast.success("Scale saved successfully!");
   };
+
+  if (isLoading) return <div>Loading fonts...</div>;
+  if (error) return <div>Error loading fonts: {error.message}</div>;
 
   return (
     <div className="container mx-auto p-4">
@@ -138,6 +153,7 @@ const TypographyScaleCalculator = () => {
             </TabsContent>
             <TabsContent value="preview">
               <div style={{ fontFamily: selectedFont }}>
+                <h2 className="text-2xl font-bold mb-4">Font Preview: {selectedFont}</h2>
                 {generatedScale.map(({ step, size }) => (
                   <p key={step} style={{ fontSize: size }}>
                     Typography Scale Step {step}: The quick brown fox jumps over the lazy dog
