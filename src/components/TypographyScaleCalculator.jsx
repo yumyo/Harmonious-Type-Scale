@@ -36,6 +36,9 @@ const TypographyScaleCalculator = () => {
   const [elementSteps, setElementSteps] = useState(
     Object.fromEntries(htmlElements.map((element, index) => [element, index - 2]))
   );
+  const [useMobileScale, setUseMobileScale] = useState(false);
+  const [mobileBaseSize, setMobileBaseSize] = useState(14);
+  const [breakpoint, setBreakpoint] = useState(768);
 
   const { data: fonts, isLoading, error } = useQuery({
     queryKey: ['fonts'],
@@ -51,7 +54,7 @@ const TypographyScaleCalculator = () => {
 
   useEffect(() => {
     generateScale();
-  }, [baseSize, selectedScale, positiveSteps, negativeSteps, isAdvanced, elementSteps]);
+  }, [baseSize, mobileBaseSize, selectedScale, positiveSteps, negativeSteps, isAdvanced, elementSteps, useMobileScale, breakpoint]);
 
   useEffect(() => {
     if (selectedFont) {
@@ -68,12 +71,24 @@ const TypographyScaleCalculator = () => {
 
   const generateScale = () => {
     const scaleValue = scales[selectedScale];
+    const desktopScale = generateScaleForBaseSize(baseSize, scaleValue);
+    setGeneratedScale(desktopScale);
+
+    if (useMobileScale) {
+      const mobileScale = generateScaleForBaseSize(mobileBaseSize, scaleValue);
+      generateCSSOutput(desktopScale, mobileScale);
+    } else {
+      generateCSSOutput(desktopScale);
+    }
+  };
+
+  const generateScaleForBaseSize = (size, scaleValue) => {
     const newScale = [];
     const totalSteps = positiveSteps + negativeSteps + 1; // +1 for the base step
 
     if (isAdvanced) {
-      let a = baseSize;
-      const b = baseSize;
+      let a = size;
+      const b = size;
       const ratio = scaleValue;
 
       for (let step = -negativeSteps; step <= positiveSteps; step++) {
@@ -90,36 +105,43 @@ const TypographyScaleCalculator = () => {
     } else {
       // Generate negative steps
       for (let i = negativeSteps; i > 0; i--) {
-        const size = baseSize * Math.pow(scaleValue, -i);
-        const clampedSize = `clamp(${(size * 0.75).toFixed(2)}px, ${(size / 16).toFixed(2)}rem, ${(size * 1.25).toFixed(2)}px)`;
+        const stepSize = size * Math.pow(scaleValue, -i);
+        const clampedSize = `clamp(${(stepSize * 0.75).toFixed(2)}px, ${(stepSize / 16).toFixed(2)}rem, ${(stepSize * 1.25).toFixed(2)}px)`;
         newScale.push({ step: -i, size: clampedSize });
       }
 
       // Add base size (step 0)
-      newScale.push({ step: 0, size: `${baseSize}px` });
+      newScale.push({ step: 0, size: `${size}px` });
 
       // Generate positive steps
       for (let i = 1; i <= positiveSteps; i++) {
-        const size = baseSize * Math.pow(scaleValue, i);
-        const clampedSize = `clamp(${(size * 0.75).toFixed(2)}px, ${(size / 16).toFixed(2)}rem, ${(size * 1.25).toFixed(2)}px)`;
+        const stepSize = size * Math.pow(scaleValue, i);
+        const clampedSize = `clamp(${(stepSize * 0.75).toFixed(2)}px, ${(stepSize / 16).toFixed(2)}rem, ${(stepSize * 1.25).toFixed(2)}px)`;
         newScale.push({ step: i, size: clampedSize });
       }
     }
 
-    setGeneratedScale(newScale);
-    generateCSSOutput(newScale);
+    return newScale;
   };
 
-  const generateCSSOutput = (scale) => {
+  const generateCSSOutput = (desktopScale, mobileScale = null) => {
     let css = ':root {\n';
-    scale.forEach(({ step, size }) => {
+    desktopScale.forEach(({ step, size }) => {
       css += `  --step-${step}: ${size};\n`;
     });
     css += '}\n\n';
 
+    if (mobileScale) {
+      css += `@media (max-width: ${breakpoint}px) {\n  :root {\n`;
+      mobileScale.forEach(({ step, size }) => {
+        css += `    --step-${step}: ${size};\n`;
+      });
+      css += '  }\n}\n\n';
+    }
+
     htmlElements.forEach((element) => {
       const step = elementSteps[element];
-      const scaleItem = scale.find(item => item.step === step);
+      const scaleItem = desktopScale.find(item => item.step === step);
       if (scaleItem) {
         css += `${element} {\n  font-size: var(--step-${step});\n}\n\n`;
       }
@@ -222,6 +244,39 @@ const TypographyScaleCalculator = () => {
           </div>
 
           <div className="mt-6">
+            <div className="flex items-center space-x-2 mb-4">
+              <Switch
+                id="use-mobile-scale"
+                checked={useMobileScale}
+                onCheckedChange={setUseMobileScale}
+              />
+              <Label htmlFor="use-mobile-scale">Use Mobile Scale</Label>
+            </div>
+            {useMobileScale && (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
+                <div>
+                  <Label htmlFor="mobileBaseSize">Mobile Base Size (px)</Label>
+                  <Input
+                    id="mobileBaseSize"
+                    type="number"
+                    value={mobileBaseSize}
+                    onChange={(e) => setMobileBaseSize(Number(e.target.value))}
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="breakpoint">Breakpoint (px)</Label>
+                  <Input
+                    id="breakpoint"
+                    type="number"
+                    value={breakpoint}
+                    onChange={(e) => setBreakpoint(Number(e.target.value))}
+                  />
+                </div>
+              </div>
+            )}
+          </div>
+
+          <div className="mt-6">
             <h3 className="text-lg font-semibold mb-2">Element Step Assignment</h3>
             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
               {htmlElements.map((element) => (
@@ -255,27 +310,60 @@ const TypographyScaleCalculator = () => {
             </TabsList>
             <TabsContent value="scale">
               <div className="space-y-2">
+                <h3 className="font-semibold">Desktop Scale</h3>
                 {generatedScale.map(({ step, size }) => (
                   <div key={step} className="flex justify-between items-center">
                     <span>Step {step}</span>
                     <code>{size}</code>
                   </div>
                 ))}
+                {useMobileScale && (
+                  <>
+                    <h3 className="font-semibold mt-4">Mobile Scale</h3>
+                    {generateScaleForBaseSize(mobileBaseSize, scales[selectedScale]).map(({ step, size }) => (
+                      <div key={step} className="flex justify-between items-center">
+                        <span>Step {step}</span>
+                        <code>{size}</code>
+                      </div>
+                    ))}
+                  </>
+                )}
               </div>
             </TabsContent>
             <TabsContent value="preview">
               <div style={{ fontFamily: selectedFont }}>
                 <h2 className="text-2xl font-bold mb-4">Font Preview: {selectedFont}</h2>
-                {htmlElements.map((element) => {
-                  const step = elementSteps[element];
-                  const scaleItem = generatedScale.find(item => item.step === step);
-                  const Element = element;
-                  return (
-                    <Element key={element} style={{ fontSize: scaleItem ? scaleItem.size : 'inherit' }}>
-                      {element}: The quick brown fox jumps over the lazy dog
-                    </Element>
-                  );
-                })}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <h3 className="font-semibold mb-2">Desktop</h3>
+                    {htmlElements.map((element) => {
+                      const step = elementSteps[element];
+                      const scaleItem = generatedScale.find(item => item.step === step);
+                      const Element = element;
+                      return (
+                        <Element key={element} style={{ fontSize: scaleItem ? scaleItem.size : 'inherit' }}>
+                          {element}: The quick brown fox jumps over the lazy dog
+                        </Element>
+                      );
+                    })}
+                  </div>
+                  {useMobileScale && (
+                    <div>
+                      <h3 className="font-semibold mb-2">Mobile</h3>
+                      {htmlElements.map((element) => {
+                        const step = elementSteps[element];
+                        const mobileScale = generateScaleForBaseSize(mobileBaseSize, scales[selectedScale]);
+                        const scaleItem = mobileScale.find(item => item.step === step);
+                        const Element = element;
+                        return (
+                          <Element key={element} style={{ fontSize: scaleItem ? scaleItem.size : 'inherit' }}>
+                            {element}: The quick brown fox jumps over the lazy dog
+                          </Element>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
               </div>
             </TabsContent>
             <TabsContent value="css">
