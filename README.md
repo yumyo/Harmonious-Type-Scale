@@ -1,4 +1,4 @@
-# Welcome to your GPT Engineer project
+# An experimental project using GPT Engineer
 
 ## Project info
 
