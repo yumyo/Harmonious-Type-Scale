@@ -381,9 +381,9 @@ const TypographyScaleCalculator = () => {
                     </div>
                   </TabsContent>
                   <TabsContent value="preview" className="flex-grow overflow-y-auto">
-                    <div style={{ fontFamily: selectedFont }}>
+                    <div style={{ fontFamily: selectedFont }} className="w-full">
                       <h2 className="text-2xl font-bold mb-4">Font Preview: {selectedFont}</h2>
-                      <div className="mb-4">
+                      <div className="mb-4 w-full">
                         <Label htmlFor="previewText" className="block mb-1">Preview Text</Label>
                         <Input
                           id="previewText"
@@ -392,12 +392,25 @@ const TypographyScaleCalculator = () => {
                           className="w-full"
                         />
                       </div>
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div>
-                          <h3 className="font-semibold mb-2">Desktop</h3>
+                      <div className="w-full">
+                        <h3 className="font-semibold mb-2">Desktop</h3>
+                        {htmlElements.map((element) => {
+                          const step = elementSteps[element];
+                          const scaleItem = generatedScale.find(item => item.step === step);
+                          const Element = element === 'display' || element === 'title' || element === 'micro' ? 'div' : element;
+                          return (
+                            <Element key={element} className={`${element === 'display' || element === 'title' || element === 'micro' ? element : ''} w-full`} style={{ fontSize: scaleItem ? scaleItem.size : 'inherit' }}>
+                              {element}: {previewText}
+                            </Element>
+                          );
+                        })}
+                      </div>
+                      {useMobileScale && (
+                        <div className="w-full mt-4">
+                          <h3 className="font-semibold mb-2">Mobile</h3>
                           {htmlElements.map((element) => {
                             const step = elementSteps[element];
-                            const scaleItem = generatedScale.find(item => item.step === step);
+                            const scaleItem = generatedMobileScale.find(item => item.step === step);
                             const Element = element === 'display' || element === 'title' || element === 'micro' ? 'div' : element;
                             return (
                               <Element key={element} className={`${element === 'display' || element === 'title' || element === 'micro' ? element : ''} w-full`} style={{ fontSize: scaleItem ? scaleItem.size : 'inherit' }}>
@@ -406,22 +419,7 @@ const TypographyScaleCalculator = () => {
                             );
                           })}
                         </div>
-                        {useMobileScale && (
-                          <div>
-                            <h3 className="font-semibold mb-2">Mobile</h3>
-                            {htmlElements.map((element) => {
-                              const step = elementSteps[element];
-                              const scaleItem = generatedMobileScale.find(item => item.step === step);
-                              const Element = element === 'display' || element === 'title' || element === 'micro' ? 'div' : element;
-                              return (
-                                <Element key={element} className={`${element === 'display' || element === 'title' || element === 'micro' ? element : ''} w-full`} style={{ fontSize: scaleItem ? scaleItem.size : 'inherit' }}>
-                                  {element}: {previewText}
-                                </Element>
-                              );
-                            })}
-                          </div>
-                        )}
-                      </div>
+                      )}
                     </div>
                   </TabsContent>
                   <TabsContent value="css" className="flex-grow">
