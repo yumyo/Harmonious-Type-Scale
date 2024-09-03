@@ -22,22 +22,36 @@ const scales = {
   'Golden Ratio': 1.618
 };
 
-const htmlElements = ['title', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'blockquote', 'p', 'caption', 'small', 'micro'];
+const htmlElements = ['display', 'title', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'blockquote', 'p', 'caption', 'small', 'micro'];
+
+const presets = {
+  'display': 9,
+  'title': 8,
+  'h1': 7,
+  'h2': 6,
+  'h3': 5,
+  'h4': 4,
+  'h5': 3,
+  'h6': 2,
+  'blockquote': 1,
+  'p': 0,
+  'small': -1,
+  'caption': -2,
+  'micro': -3
+};
 
 const TypographyScaleCalculator = () => {
   const [baseSize, setBaseSize] = useState(16);
   const [selectedScale, setSelectedScale] = useState('Perfect Fourth');
   const [selectedMobileScale, setSelectedMobileScale] = useState('Perfect Fourth');
-  const [positiveSteps, setPositiveSteps] = useState(5);
-  const [negativeSteps, setNegativeSteps] = useState(2);
+  const [positiveSteps, setPositiveSteps] = useState(9);
+  const [negativeSteps, setNegativeSteps] = useState(3);
   const [selectedFont, setSelectedFont] = useState('');
   const [generatedScale, setGeneratedScale] = useState([]);
   const [generatedMobileScale, setGeneratedMobileScale] = useState([]);
   const [isAdvanced, setIsAdvanced] = useState(false);
   const [cssOutput, setCssOutput] = useState('');
-  const [elementSteps, setElementSteps] = useState(
-    Object.fromEntries(htmlElements.map((element, index) => [element, index - 2]))
-  );
+  const [elementSteps, setElementSteps] = useState(presets);
   const [useMobileScale, setUseMobileScale] = useState(false);
   const [mobileBaseSize, setMobileBaseSize] = useState(14);
   const [breakpoint, setBreakpoint] = useState(768);
@@ -147,7 +161,11 @@ const TypographyScaleCalculator = () => {
       const step = elementSteps[element];
       const scaleItem = desktopScale.find(item => item.step === step);
       if (scaleItem) {
-        css += `${element} {\n  font-size: var(--step-${step});\n}\n\n`;
+        if (element === 'display' || element === 'title' || element === 'micro') {
+          css += `.${element} {\n  font-size: var(--step-${step});\n}\n\n`;
+        } else {
+          css += `${element} {\n  font-size: var(--step-${step});\n}\n\n`;
+        }
       }
     });
 
@@ -358,9 +376,9 @@ const TypographyScaleCalculator = () => {
                     {htmlElements.map((element) => {
                       const step = elementSteps[element];
                       const scaleItem = generatedScale.find(item => item.step === step);
-                      const Element = element;
+                      const Element = element === 'display' || element === 'title' || element === 'micro' ? 'div' : element;
                       return (
-                        <Element key={element} style={{ fontSize: scaleItem ? scaleItem.size : 'inherit' }}>
+                        <Element key={element} className={element === 'display' || element === 'title' || element === 'micro' ? element : ''} style={{ fontSize: scaleItem ? scaleItem.size : 'inherit' }}>
                           {element}: The quick brown fox jumps over the lazy dog
                         </Element>
                       );
@@ -372,9 +390,9 @@ const TypographyScaleCalculator = () => {
                       {htmlElements.map((element) => {
                         const step = elementSteps[element];
                         const scaleItem = generatedMobileScale.find(item => item.step === step);
-                        const Element = element;
+                        const Element = element === 'display' || element === 'title' || element === 'micro' ? 'div' : element;
                         return (
-                          <Element key={element} style={{ fontSize: scaleItem ? scaleItem.size : 'inherit' }}>
+                          <Element key={element} className={element === 'display' || element === 'title' || element === 'micro' ? element : ''} style={{ fontSize: scaleItem ? scaleItem.size : 'inherit' }}>
                             {element}: The quick brown fox jumps over the lazy dog
                           </Element>
                         );
