@@ -11,6 +11,7 @@ import { Switch } from "@/components/ui/switch";
 import { toast } from "sonner";
 import { Textarea } from "@/components/ui/textarea";
 import { Panel, PanelGroup, PanelResizeHandle } from 'react-resizable-panels';
+import { useTheme } from 'next-themes';
 
 const scales = {
   'Minor Second': 1.067,
@@ -75,6 +76,7 @@ const TypographyScaleCalculator = () => {
   const [breakpoint, setBreakpoint] = useState(768);
   const [previewText, setPreviewText] = useState('The quick brown fox jumps over the lazy dog');
   const [selectedPresetGroup, setSelectedPresetGroup] = useState('Default');
+  const { theme, setTheme } = useTheme();
 
   const { data: fonts, isLoading, error } = useQuery({
     queryKey: ['fonts'],
@@ -206,6 +208,13 @@ const TypographyScaleCalculator = () => {
     setElementSteps(presetGroups[group]);
   };
 
+  const handlePreviewTextChange = (element, text) => {
+    setPreviewText(prevState => ({
+      ...prevState,
+      [element]: text
+    }));
+  };
+
   if (isLoading) return <div>Loading fonts...</div>;
   if (error) return <div>Error loading fonts: {error.message}</div>;
 
@@ -215,7 +224,7 @@ const TypographyScaleCalculator = () => {
         <CardContent className="p-0 h-full">
           <PanelGroup direction="horizontal" className="h-full">
             <Panel defaultSize={30} minSize={20} maxSize={40} className="h-full">
-              <div className="p-4 h-full overflow-y-auto flex flex-col">
+              <div className="p-4 h-full overflow-y-auto flex flex-col bg-[#1f1f1f] dark:bg-[#2f2f2f] text-white">
                 <h1 className="text-2xl font-bold mb-6">Harmonious Type Scale</h1>
                 <div className="flex-grow">
                   <div className="flex items-center space-x-2 mb-4">
@@ -386,6 +395,19 @@ const TypographyScaleCalculator = () => {
                   </div>
                 </div>
                 <Button onClick={handleSave} className="mt-4 w-full">Save Scale</Button>
+                <div className="mt-4">
+                  <Label htmlFor="theme-toggle">Theme</Label>
+                  <Select value={theme} onValueChange={setTheme}>
+                    <SelectTrigger id="theme-toggle" className="w-full">
+                      <SelectValue>{theme}</SelectValue>
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="light">Light</SelectItem>
+                      <SelectItem value="dark">Dark</SelectItem>
+                      <SelectItem value="system">System</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
               </div>
             </Panel>
             <PanelResizeHandle className="w-2 bg-gray-200 hover:bg-gray-300 transition-colors" />
@@ -422,15 +444,6 @@ const TypographyScaleCalculator = () => {
                   <TabsContent value="preview" className="flex-grow overflow-y-auto">
                     <div style={{ fontFamily: selectedFont }} className="w-full">
                       <h2 className="text-2xl font-bold mb-4">Font Preview: {selectedFont}</h2>
-                      <div className="mb-4 w-full">
-                        <Label htmlFor="previewText" className="block mb-1">Preview Text</Label>
-                        <Input
-                          id="previewText"
-                          value={previewText}
-                          onChange={(e) => setPreviewText(e.target.value)}
-                          className="w-full"
-                        />
-                      </div>
                       <div className="w-full">
                         <h3 className="font-semibold mb-2">Desktop</h3>
                         {htmlElements.map((element) => {
@@ -438,7 +451,14 @@ const TypographyScaleCalculator = () => {
                           const scaleItem = generatedScale.find(item => item.step === step);
                           const Element = element === 'display' || element === 'title' || element === 'micro' ? 'div' : element;
                           return (
-                            <Element key={element} className={`${element === 'display' || element === 'title' || element === 'micro' ? element : ''} w-full`} style={{ fontSize: scaleItem ? scaleItem.size : 'inherit' }}>
+                            <Element
+                              key={element}
+                              className={`${element === 'display' || element === 'title' || element === 'micro' ? element : ''} w-full`}
+                              style={{ fontSize: scaleItem ? scaleItem.size : 'inherit' }}
+                              contentEditable
+                              onBlur={(e) => handlePreviewTextChange(element, e.target.textContent)}
+                              suppressContentEditableWarning={true}
+                            >
                               {element}: {previewText}
                             </Element>
                           );
@@ -452,7 +472,14 @@ const TypographyScaleCalculator = () => {
                             const scaleItem = generatedMobileScale.find(item => item.step === step);
                             const Element = element === 'display' || element === 'title' || element === 'micro' ? 'div' : element;
                             return (
-                              <Element key={element} className={`${element === 'display' || element === 'title' || element === 'micro' ? element : ''} w-full`} style={{ fontSize: scaleItem ? scaleItem.size : 'inherit' }}>
+                              <Element
+                                key={element}
+                                className={`${element === 'display' || element === 'title' || element === 'micro' ? element : ''} w-full`}
+                                style={{ fontSize: scaleItem ? scaleItem.size : 'inherit' }}
+                                contentEditable
+                                onBlur={(e) => handlePreviewTextChange(element, e.target.textContent)}
+                                suppressContentEditableWarning={true}
+                              >
                                 {element}: {previewText}
                               </Element>
                             );
