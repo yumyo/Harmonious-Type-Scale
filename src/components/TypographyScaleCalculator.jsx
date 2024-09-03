@@ -224,7 +224,7 @@ const TypographyScaleCalculator = () => {
         <CardContent className="p-0 h-full">
           <PanelGroup direction="horizontal" className="h-full">
             <Panel defaultSize={30} minSize={20} maxSize={40} className="h-full">
-              <div className="p-4 h-full overflow-y-auto flex flex-col bg-[#1f1f1f] dark:bg-[#2f2f2f] text-white">
+              <div className="p-4 h-full overflow-y-auto flex flex-col bg-neutral-900 dark:bg-neutral-950 text-neutral-100">
                 <h1 className="text-2xl font-bold mb-6">Harmonious Type Scale</h1>
                 <div className="flex-grow">
                   <div className="flex items-center space-x-2 mb-4">
@@ -410,9 +410,9 @@ const TypographyScaleCalculator = () => {
                 </div>
               </div>
             </Panel>
-            <PanelResizeHandle className="w-2 bg-gray-200 hover:bg-gray-300 transition-colors" />
+            <PanelResizeHandle className="w-2 bg-neutral-200 hover:bg-neutral-300 transition-colors" />
             <Panel className="h-full">
-              <div className="p-4 h-full overflow-y-auto">
+              <div className="p-4 h-full overflow-y-auto bg-neutral-100 dark:bg-neutral-900 text-neutral-900 dark:text-neutral-100">
                 <Tabs defaultValue="scale" className="h-full flex flex-col">
                   <TabsList className="w-full">
                     <TabsTrigger value="scale" className="flex-1">Generated Scale</TabsTrigger>
