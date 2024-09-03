@@ -186,7 +186,7 @@ const TypographyScaleCalculator = () => {
   if (error) return <div>Error loading fonts: {error.message}</div>;
 
   return (
-    <div className="container mx-auto p-4">
+    <div className="w-full">
       <Card>
         <CardHeader>
           <CardTitle>Typography Scale Calculator</CardTitle>
