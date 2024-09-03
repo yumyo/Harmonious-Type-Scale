@@ -25,20 +25,37 @@ const scales = {
 
 const htmlElements = ['display', 'title', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'blockquote', 'p', 'caption', 'small', 'micro'];
 
-const presets = {
-  'display': 9,
-  'title': 8,
-  'h1': 7,
-  'h2': 6,
-  'h3': 5,
-  'h4': 4,
-  'h5': 3,
-  'h6': 2,
-  'blockquote': 1,
-  'p': 0,
-  'small': -1,
-  'caption': -2,
-  'micro': -3
+const presetGroups = {
+  'Default': {
+    'display': 9,
+    'title': 8,
+    'h1': 7,
+    'h2': 6,
+    'h3': 5,
+    'h4': 4,
+    'h5': 3,
+    'h6': 2,
+    'blockquote': 1,
+    'p': 0,
+    'caption': -1,
+    'small': -1,
+    'micro': -2
+  },
+  'Fibonacci': {
+    'display': 13,
+    'title': 8,
+    'h1': 5,
+    'h2': 3,
+    'h3': 2,
+    'h4': 1,
+    'h5': 1,
+    'h6': 0,
+    'blockquote': 0,
+    'p': 0,
+    'caption': -1,
+    'small': -1,
+    'micro': -2
+  }
 };
 
 const TypographyScaleCalculator = () => {
@@ -52,11 +69,12 @@ const TypographyScaleCalculator = () => {
   const [generatedMobileScale, setGeneratedMobileScale] = useState([]);
   const [isAdvanced, setIsAdvanced] = useState(false);
   const [cssOutput, setCssOutput] = useState('');
-  const [elementSteps, setElementSteps] = useState(presets);
+  const [elementSteps, setElementSteps] = useState(presetGroups['Default']);
   const [useMobileScale, setUseMobileScale] = useState(false);
   const [mobileBaseSize, setMobileBaseSize] = useState(14);
   const [breakpoint, setBreakpoint] = useState(768);
   const [previewText, setPreviewText] = useState('The quick brown fox jumps over the lazy dog');
+  const [selectedPresetGroup, setSelectedPresetGroup] = useState('Default');
 
   const { data: fonts, isLoading, error } = useQuery({
     queryKey: ['fonts'],
@@ -183,6 +201,11 @@ const TypographyScaleCalculator = () => {
     setElementSteps(prev => ({ ...prev, [element]: step }));
   };
 
+  const handlePresetGroupChange = (group) => {
+    setSelectedPresetGroup(group);
+    setElementSteps(presetGroups[group]);
+  };
+
   if (isLoading) return <div>Loading fonts...</div>;
   if (error) return <div>Error loading fonts: {error.message}</div>;
 
@@ -193,6 +216,7 @@ const TypographyScaleCalculator = () => {
           <PanelGroup direction="horizontal" className="h-full">
             <Panel defaultSize={30} minSize={20} maxSize={40} className="h-full">
               <div className="p-4 h-full overflow-y-auto flex flex-col">
+                <h1 className="text-2xl font-bold mb-6">Harmonious Type Scale</h1>
                 <div className="flex-grow">
                   <div className="flex items-center space-x-2 mb-4">
                     <Switch
@@ -322,6 +346,21 @@ const TypographyScaleCalculator = () => {
 
                   <div className="mt-6">
                     <h3 className="text-lg font-semibold mb-2">Element Step Assignment</h3>
+                    <div className="w-full mb-4">
+                      <Label htmlFor="presetGroup" className="block mb-1">Preset Group</Label>
+                      <Select value={selectedPresetGroup} onValueChange={handlePresetGroupChange}>
+                        <SelectTrigger className="w-full">
+                          <SelectValue>{selectedPresetGroup}</SelectValue>
+                        </SelectTrigger>
+                        <SelectContent>
+                          {Object.keys(presetGroups).map((group) => (
+                            <SelectItem key={group} value={group}>
+                              {group}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
                     <div className="space-y-2">
                       {htmlElements.map((element) => (
                         <div key={element} className="flex items-center justify-between">
@@ -422,7 +461,7 @@ const TypographyScaleCalculator = () => {
                       )}
                     </div>
                   </TabsContent>
-                  <TabsContent value="css" className="flex-grow">
+                  <TabsContent value="css" className="flex-grow h-full">
                     <Textarea
                       value={cssOutput}
                       readOnly
