@@ -191,7 +191,7 @@ const TypographyScaleCalculator = () => {
         <CardContent className="p-0 h-full">
           <PanelGroup direction="horizontal" className="h-full">
             <Panel defaultSize={30} minSize={20} maxSize={40} className="h-full">
-              <div className="p-4 h-full overflow-y-auto" style={{ maxWidth: '300px' }}>
+              <div className="p-4 h-full overflow-y-auto">
                 <div className="flex items-center space-x-2 mb-4">
                   <Switch
                     id="advanced-mode"
@@ -323,12 +323,12 @@ const TypographyScaleCalculator = () => {
                   <div className="space-y-2">
                     {htmlElements.map((element) => (
                       <div key={element} className="flex items-center justify-between">
-                        <Label htmlFor={`step-${element}`}>{element}</Label>
+                        <Label htmlFor={`step-${element}`} className="flex-grow">{element}</Label>
                         <Select
                           value={elementSteps[element].toString()}
                           onValueChange={(value) => handleElementStepChange(element, parseInt(value))}
                         >
-                          <SelectTrigger id={`step-${element}`} className="w-20">
+                          <SelectTrigger id={`step-${element}`} className="w-24">
                             <SelectValue>{elementSteps[element]}</SelectValue>
                           </SelectTrigger>
                           <SelectContent>
@@ -349,10 +349,10 @@ const TypographyScaleCalculator = () => {
             <Panel className="h-full">
               <div className="p-4 h-full overflow-y-auto">
                 <Tabs defaultValue="scale" className="h-full">
-                  <TabsList>
-                    <TabsTrigger value="scale">Generated Scale</TabsTrigger>
-                    <TabsTrigger value="preview">Preview</TabsTrigger>
-                    <TabsTrigger value="css">CSS Output</TabsTrigger>
+                  <TabsList className="w-full">
+                    <TabsTrigger value="scale" className="flex-1">Generated Scale</TabsTrigger>
+                    <TabsTrigger value="preview" className="flex-1">Preview</TabsTrigger>
+                    <TabsTrigger value="css" className="flex-1">CSS Output</TabsTrigger>
                   </TabsList>
                   <TabsContent value="scale">
                     <div className="space-y-2">
@@ -420,7 +420,7 @@ const TypographyScaleCalculator = () => {
                   </TabsContent>
                 </Tabs>
 
-                <Button onClick={handleSave} className="mt-4">Save Scale</Button>
+                <Button onClick={handleSave} className="mt-4 w-full">Save Scale</Button>
               </div>
             </Panel>
           </PanelGroup>
