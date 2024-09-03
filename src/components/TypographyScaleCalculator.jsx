@@ -10,6 +10,7 @@ import { Slider } from "@/components/ui/slider";
 import { Switch } from "@/components/ui/switch";
 import { toast } from "sonner";
 import { Textarea } from "@/components/ui/textarea";
+import { Panel, PanelGroup, PanelResizeHandle } from 'react-resizable-panels';
 
 const scales = {
   'Minor Second': 1.067,
@@ -192,226 +193,236 @@ const TypographyScaleCalculator = () => {
           <CardDescription>Generate a responsive typography scale using CSS clamp and modular scales</CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="flex items-center space-x-2 mb-4">
-            <Switch
-              id="advanced-mode"
-              checked={isAdvanced}
-              onCheckedChange={setIsAdvanced}
-            />
-            <Label htmlFor="advanced-mode">Advanced Mode</Label>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <Label htmlFor="baseSize">Base Size (px)</Label>
-              <Input
-                id="baseSize"
-                type="number"
-                value={baseSize}
-                onChange={(e) => setBaseSize(Number(e.target.value))}
-              />
-            </div>
-            <div>
-              <Label htmlFor="scale">Scale</Label>
-              <Select value={selectedScale} onValueChange={setSelectedScale}>
-                <SelectTrigger>
-                  <SelectValue>{selectedScale}</SelectValue>
-                </SelectTrigger>
-                <SelectContent>
-                  {Object.keys(scales).map((scale) => (
-                    <SelectItem key={scale} value={scale}>
-                      {scale}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-            <div>
-              <Label htmlFor="positiveSteps">Positive Steps</Label>
-              <Slider
-                id="positiveSteps"
-                min={1}
-                max={isAdvanced ? 36 : 10}
-                step={1}
-                value={[positiveSteps]}
-                onValueChange={(value) => setPositiveSteps(value[0])}
-              />
-            </div>
-            <div>
-              <Label htmlFor="negativeSteps">Negative Steps</Label>
-              <Slider
-                id="negativeSteps"
-                min={0}
-                max={isAdvanced ? 12 : 5}
-                step={1}
-                value={[negativeSteps]}
-                onValueChange={(value) => setNegativeSteps(value[0])}
-              />
-            </div>
-            <div>
-              <Label htmlFor="font">Font</Label>
-              <Select value={selectedFont} onValueChange={setSelectedFont}>
-                <SelectTrigger>
-                  <SelectValue>{selectedFont || 'Select a font'}</SelectValue>
-                </SelectTrigger>
-                <SelectContent>
-                  {fonts?.map((font) => (
-                    <SelectItem key={font} value={font}>
-                      {font}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
-
-          <div className="mt-6">
-            <div className="flex items-center space-x-2 mb-4">
-              <Switch
-                id="use-mobile-scale"
-                checked={useMobileScale}
-                onCheckedChange={setUseMobileScale}
-              />
-              <Label htmlFor="use-mobile-scale">Use Mobile Scale</Label>
-            </div>
-            {useMobileScale && (
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
-                <div>
-                  <Label htmlFor="mobileBaseSize">Mobile Base Size (px)</Label>
-                  <Input
-                    id="mobileBaseSize"
-                    type="number"
-                    value={mobileBaseSize}
-                    onChange={(e) => setMobileBaseSize(Number(e.target.value))}
+          <PanelGroup direction="horizontal">
+            <Panel defaultSize={30} minSize={20} maxSize={40}>
+              <div className="pr-4 max-w-[300px]">
+                <div className="flex items-center space-x-2 mb-4">
+                  <Switch
+                    id="advanced-mode"
+                    checked={isAdvanced}
+                    onCheckedChange={setIsAdvanced}
                   />
+                  <Label htmlFor="advanced-mode">Advanced Mode</Label>
                 </div>
-                <div>
-                  <Label htmlFor="mobileScale">Mobile Scale</Label>
-                  <Select value={selectedMobileScale} onValueChange={setSelectedMobileScale}>
-                    <SelectTrigger>
-                      <SelectValue>{selectedMobileScale}</SelectValue>
-                    </SelectTrigger>
-                    <SelectContent>
-                      {Object.keys(scales).map((scale) => (
-                        <SelectItem key={scale} value={scale}>
-                          {scale}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div>
-                  <Label htmlFor="breakpoint">Breakpoint (px)</Label>
-                  <Input
-                    id="breakpoint"
-                    type="number"
-                    value={breakpoint}
-                    onChange={(e) => setBreakpoint(Number(e.target.value))}
-                  />
-                </div>
-              </div>
-            )}
-          </div>
 
-          <div className="mt-6">
-            <h3 className="text-lg font-semibold mb-2">Element Step Assignment</h3>
-            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-              {htmlElements.map((element) => (
-                <div key={element}>
-                  <Label htmlFor={`step-${element}`}>{element}</Label>
-                  <Select
-                    value={elementSteps[element].toString()}
-                    onValueChange={(value) => handleElementStepChange(element, parseInt(value))}
-                  >
-                    <SelectTrigger id={`step-${element}`}>
-                      <SelectValue>{elementSteps[element]}</SelectValue>
-                    </SelectTrigger>
-                    <SelectContent>
-                      {generatedScale.map(({ step }) => (
-                        <SelectItem key={step} value={step.toString()}>
-                          {step}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          <Tabs defaultValue="scale" className="mt-6">
-            <TabsList>
-              <TabsTrigger value="scale">Generated Scale</TabsTrigger>
-              <TabsTrigger value="preview">Preview</TabsTrigger>
-              <TabsTrigger value="css">CSS Output</TabsTrigger>
-            </TabsList>
-            <TabsContent value="scale">
-              <div className="space-y-2">
-                <h3 className="font-semibold">Desktop Scale</h3>
-                {generatedScale.map(({ step, size }) => (
-                  <div key={step} className="flex justify-between items-center">
-                    <span>Step {step}</span>
-                    <code>{size}</code>
-                  </div>
-                ))}
-                {useMobileScale && (
-                  <>
-                    <h3 className="font-semibold mt-4">Mobile Scale</h3>
-                    {generatedMobileScale.map(({ step, size }) => (
-                      <div key={step} className="flex justify-between items-center">
-                        <span>Step {step}</span>
-                        <code>{size}</code>
-                      </div>
-                    ))}
-                  </>
-                )}
-              </div>
-            </TabsContent>
-            <TabsContent value="preview">
-              <div style={{ fontFamily: selectedFont }}>
-                <h2 className="text-2xl font-bold mb-4">Font Preview: {selectedFont}</h2>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-4">
                   <div>
-                    <h3 className="font-semibold mb-2">Desktop</h3>
-                    {htmlElements.map((element) => {
-                      const step = elementSteps[element];
-                      const scaleItem = generatedScale.find(item => item.step === step);
-                      const Element = element === 'display' || element === 'title' || element === 'micro' ? 'div' : element;
-                      return (
-                        <Element key={element} className={element === 'display' || element === 'title' || element === 'micro' ? element : ''} style={{ fontSize: scaleItem ? scaleItem.size : 'inherit' }}>
-                          {element}: The quick brown fox jumps over the lazy dog
-                        </Element>
-                      );
-                    })}
+                    <Label htmlFor="baseSize">Base Size (px)</Label>
+                    <Input
+                      id="baseSize"
+                      type="number"
+                      value={baseSize}
+                      onChange={(e) => setBaseSize(Number(e.target.value))}
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="scale">Scale</Label>
+                    <Select value={selectedScale} onValueChange={setSelectedScale}>
+                      <SelectTrigger>
+                        <SelectValue>{selectedScale}</SelectValue>
+                      </SelectTrigger>
+                      <SelectContent>
+                        {Object.keys(scales).map((scale) => (
+                          <SelectItem key={scale} value={scale}>
+                            {scale}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div>
+                    <Label htmlFor="positiveSteps">Positive Steps</Label>
+                    <Slider
+                      id="positiveSteps"
+                      min={1}
+                      max={isAdvanced ? 36 : 10}
+                      step={1}
+                      value={[positiveSteps]}
+                      onValueChange={(value) => setPositiveSteps(value[0])}
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="negativeSteps">Negative Steps</Label>
+                    <Slider
+                      id="negativeSteps"
+                      min={0}
+                      max={isAdvanced ? 12 : 5}
+                      step={1}
+                      value={[negativeSteps]}
+                      onValueChange={(value) => setNegativeSteps(value[0])}
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="font">Font</Label>
+                    <Select value={selectedFont} onValueChange={setSelectedFont}>
+                      <SelectTrigger>
+                        <SelectValue>{selectedFont || 'Select a font'}</SelectValue>
+                      </SelectTrigger>
+                      <SelectContent>
+                        {fonts?.map((font) => (
+                          <SelectItem key={font} value={font}>
+                            {font}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+
+                <div className="mt-6">
+                  <div className="flex items-center space-x-2 mb-4">
+                    <Switch
+                      id="use-mobile-scale"
+                      checked={useMobileScale}
+                      onCheckedChange={setUseMobileScale}
+                    />
+                    <Label htmlFor="use-mobile-scale">Use Mobile Scale</Label>
                   </div>
                   {useMobileScale && (
-                    <div>
-                      <h3 className="font-semibold mb-2">Mobile</h3>
-                      {htmlElements.map((element) => {
-                        const step = elementSteps[element];
-                        const scaleItem = generatedMobileScale.find(item => item.step === step);
-                        const Element = element === 'display' || element === 'title' || element === 'micro' ? 'div' : element;
-                        return (
-                          <Element key={element} className={element === 'display' || element === 'title' || element === 'micro' ? element : ''} style={{ fontSize: scaleItem ? scaleItem.size : 'inherit' }}>
-                            {element}: The quick brown fox jumps over the lazy dog
-                          </Element>
-                        );
-                      })}
+                    <div className="space-y-4 mt-4">
+                      <div>
+                        <Label htmlFor="mobileBaseSize">Mobile Base Size (px)</Label>
+                        <Input
+                          id="mobileBaseSize"
+                          type="number"
+                          value={mobileBaseSize}
+                          onChange={(e) => setMobileBaseSize(Number(e.target.value))}
+                        />
+                      </div>
+                      <div>
+                        <Label htmlFor="mobileScale">Mobile Scale</Label>
+                        <Select value={selectedMobileScale} onValueChange={setSelectedMobileScale}>
+                          <SelectTrigger>
+                            <SelectValue>{selectedMobileScale}</SelectValue>
+                          </SelectTrigger>
+                          <SelectContent>
+                            {Object.keys(scales).map((scale) => (
+                              <SelectItem key={scale} value={scale}>
+                                {scale}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      <div>
+                        <Label htmlFor="breakpoint">Breakpoint (px)</Label>
+                        <Input
+                          id="breakpoint"
+                          type="number"
+                          value={breakpoint}
+                          onChange={(e) => setBreakpoint(Number(e.target.value))}
+                        />
+                      </div>
                     </div>
                   )}
                 </div>
-              </div>
-            </TabsContent>
-            <TabsContent value="css">
-              <Textarea
-                value={cssOutput}
-                readOnly
-                className="w-full h-64 font-mono text-sm"
-              />
-            </TabsContent>
-          </Tabs>
 
-          <Button onClick={handleSave} className="mt-4">Save Scale</Button>
+                <div className="mt-6">
+                  <h3 className="text-lg font-semibold mb-2">Element Step Assignment</h3>
+                  <div className="space-y-2">
+                    {htmlElements.map((element) => (
+                      <div key={element} className="flex items-center justify-between">
+                        <Label htmlFor={`step-${element}`}>{element}</Label>
+                        <Select
+                          value={elementSteps[element].toString()}
+                          onValueChange={(value) => handleElementStepChange(element, parseInt(value))}
+                        >
+                          <SelectTrigger id={`step-${element}`} className="w-20">
+                            <SelectValue>{elementSteps[element]}</SelectValue>
+                          </SelectTrigger>
+                          <SelectContent>
+                            {generatedScale.map(({ step }) => (
+                              <SelectItem key={step} value={step.toString()}>
+                                {step}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            </Panel>
+            <PanelResizeHandle className="w-2 bg-gray-200 hover:bg-gray-300 transition-colors" />
+            <Panel>
+              <div className="pl-4">
+                <Tabs defaultValue="scale" className="mt-6">
+                  <TabsList>
+                    <TabsTrigger value="scale">Generated Scale</TabsTrigger>
+                    <TabsTrigger value="preview">Preview</TabsTrigger>
+                    <TabsTrigger value="css">CSS Output</TabsTrigger>
+                  </TabsList>
+                  <TabsContent value="scale">
+                    <div className="space-y-2">
+                      <h3 className="font-semibold">Desktop Scale</h3>
+                      {generatedScale.map(({ step, size }) => (
+                        <div key={step} className="flex justify-between items-center">
+                          <span>Step {step}</span>
+                          <code>{size}</code>
+                        </div>
+                      ))}
+                      {useMobileScale && (
+                        <>
+                          <h3 className="font-semibold mt-4">Mobile Scale</h3>
+                          {generatedMobileScale.map(({ step, size }) => (
+                            <div key={step} className="flex justify-between items-center">
+                              <span>Step {step}</span>
+                              <code>{size}</code>
+                            </div>
+                          ))}
+                        </>
+                      )}
+                    </div>
+                  </TabsContent>
+                  <TabsContent value="preview">
+                    <div style={{ fontFamily: selectedFont }}>
+                      <h2 className="text-2xl font-bold mb-4">Font Preview: {selectedFont}</h2>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                          <h3 className="font-semibold mb-2">Desktop</h3>
+                          {htmlElements.map((element) => {
+                            const step = elementSteps[element];
+                            const scaleItem = generatedScale.find(item => item.step === step);
+                            const Element = element === 'display' || element === 'title' || element === 'micro' ? 'div' : element;
+                            return (
+                              <Element key={element} className={element === 'display' || element === 'title' || element === 'micro' ? element : ''} style={{ fontSize: scaleItem ? scaleItem.size : 'inherit' }}>
+                                {element}: The quick brown fox jumps over the lazy dog
+                              </Element>
+                            );
+                          })}
+                        </div>
+                        {useMobileScale && (
+                          <div>
+                            <h3 className="font-semibold mb-2">Mobile</h3>
+                            {htmlElements.map((element) => {
+                              const step = elementSteps[element];
+                              const scaleItem = generatedMobileScale.find(item => item.step === step);
+                              const Element = element === 'display' || element === 'title' || element === 'micro' ? 'div' : element;
+                              return (
+                                <Element key={element} className={element === 'display' || element === 'title' || element === 'micro' ? element : ''} style={{ fontSize: scaleItem ? scaleItem.size : 'inherit' }}>
+                                  {element}: The quick brown fox jumps over the lazy dog
+                                </Element>
+                              );
+                            })}
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </TabsContent>
+                  <TabsContent value="css">
+                    <Textarea
+                      value={cssOutput}
+                      readOnly
+                      className="w-full h-64 font-mono text-sm"
+                    />
+                  </TabsContent>
+                </Tabs>
+
+                <Button onClick={handleSave} className="mt-4">Save Scale</Button>
+              </div>
+            </Panel>
+          </PanelGroup>
         </CardContent>
       </Card>
     </div>
