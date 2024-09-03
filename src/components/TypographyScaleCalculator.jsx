@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { Slider } from "@/components/ui/slider";
 import { Switch } from "@/components/ui/switch";
@@ -186,16 +186,12 @@ const TypographyScaleCalculator = () => {
   if (error) return <div>Error loading fonts: {error.message}</div>;
 
   return (
-    <div className="w-full">
-      <Card>
-        <CardHeader>
-          <CardTitle>Typography Scale Calculator</CardTitle>
-          <CardDescription>Generate a responsive typography scale using CSS clamp and modular scales</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <PanelGroup direction="horizontal">
-            <Panel defaultSize={30} minSize={20} maxSize={40}>
-              <div className="pr-4 max-w-[300px]">
+    <div className="w-full h-screen">
+      <Card className="h-full">
+        <CardContent className="p-0 h-full">
+          <PanelGroup direction="horizontal" className="h-full">
+            <Panel defaultSize={30} minSize={20} maxSize={40} className="h-full">
+              <div className="p-4 h-full overflow-y-auto" style={{ maxWidth: '300px' }}>
                 <div className="flex items-center space-x-2 mb-4">
                   <Switch
                     id="advanced-mode"
@@ -206,19 +202,20 @@ const TypographyScaleCalculator = () => {
                 </div>
 
                 <div className="space-y-4">
-                  <div>
-                    <Label htmlFor="baseSize">Base Size (px)</Label>
+                  <div className="w-full">
+                    <Label htmlFor="baseSize" className="block mb-1">Base Size (px)</Label>
                     <Input
                       id="baseSize"
                       type="number"
                       value={baseSize}
                       onChange={(e) => setBaseSize(Number(e.target.value))}
+                      className="w-full"
                     />
                   </div>
-                  <div>
-                    <Label htmlFor="scale">Scale</Label>
+                  <div className="w-full">
+                    <Label htmlFor="scale" className="block mb-1">Scale</Label>
                     <Select value={selectedScale} onValueChange={setSelectedScale}>
-                      <SelectTrigger>
+                      <SelectTrigger className="w-full">
                         <SelectValue>{selectedScale}</SelectValue>
                       </SelectTrigger>
                       <SelectContent>
@@ -230,8 +227,8 @@ const TypographyScaleCalculator = () => {
                       </SelectContent>
                     </Select>
                   </div>
-                  <div>
-                    <Label htmlFor="positiveSteps">Positive Steps</Label>
+                  <div className="w-full">
+                    <Label htmlFor="positiveSteps" className="block mb-1">Positive Steps</Label>
                     <Slider
                       id="positiveSteps"
                       min={1}
@@ -239,10 +236,11 @@ const TypographyScaleCalculator = () => {
                       step={1}
                       value={[positiveSteps]}
                       onValueChange={(value) => setPositiveSteps(value[0])}
+                      className="w-full"
                     />
                   </div>
-                  <div>
-                    <Label htmlFor="negativeSteps">Negative Steps</Label>
+                  <div className="w-full">
+                    <Label htmlFor="negativeSteps" className="block mb-1">Negative Steps</Label>
                     <Slider
                       id="negativeSteps"
                       min={0}
@@ -250,12 +248,13 @@ const TypographyScaleCalculator = () => {
                       step={1}
                       value={[negativeSteps]}
                       onValueChange={(value) => setNegativeSteps(value[0])}
+                      className="w-full"
                     />
                   </div>
-                  <div>
-                    <Label htmlFor="font">Font</Label>
+                  <div className="w-full">
+                    <Label htmlFor="font" className="block mb-1">Font</Label>
                     <Select value={selectedFont} onValueChange={setSelectedFont}>
-                      <SelectTrigger>
+                      <SelectTrigger className="w-full">
                         <SelectValue>{selectedFont || 'Select a font'}</SelectValue>
                       </SelectTrigger>
                       <SelectContent>
@@ -280,19 +279,20 @@ const TypographyScaleCalculator = () => {
                   </div>
                   {useMobileScale && (
                     <div className="space-y-4 mt-4">
-                      <div>
-                        <Label htmlFor="mobileBaseSize">Mobile Base Size (px)</Label>
+                      <div className="w-full">
+                        <Label htmlFor="mobileBaseSize" className="block mb-1">Mobile Base Size (px)</Label>
                         <Input
                           id="mobileBaseSize"
                           type="number"
                           value={mobileBaseSize}
                           onChange={(e) => setMobileBaseSize(Number(e.target.value))}
+                          className="w-full"
                         />
                       </div>
-                      <div>
-                        <Label htmlFor="mobileScale">Mobile Scale</Label>
+                      <div className="w-full">
+                        <Label htmlFor="mobileScale" className="block mb-1">Mobile Scale</Label>
                         <Select value={selectedMobileScale} onValueChange={setSelectedMobileScale}>
-                          <SelectTrigger>
+                          <SelectTrigger className="w-full">
                             <SelectValue>{selectedMobileScale}</SelectValue>
                           </SelectTrigger>
                           <SelectContent>
@@ -304,13 +304,14 @@ const TypographyScaleCalculator = () => {
                           </SelectContent>
                         </Select>
                       </div>
-                      <div>
-                        <Label htmlFor="breakpoint">Breakpoint (px)</Label>
+                      <div className="w-full">
+                        <Label htmlFor="breakpoint" className="block mb-1">Breakpoint (px)</Label>
                         <Input
                           id="breakpoint"
                           type="number"
                           value={breakpoint}
                           onChange={(e) => setBreakpoint(Number(e.target.value))}
+                          className="w-full"
                         />
                       </div>
                     </div>
@@ -345,9 +346,9 @@ const TypographyScaleCalculator = () => {
               </div>
             </Panel>
             <PanelResizeHandle className="w-2 bg-gray-200 hover:bg-gray-300 transition-colors" />
-            <Panel>
-              <div className="pl-4">
-                <Tabs defaultValue="scale" className="mt-6">
+            <Panel className="h-full">
+              <div className="p-4 h-full overflow-y-auto">
+                <Tabs defaultValue="scale" className="h-full">
                   <TabsList>
                     <TabsTrigger value="scale">Generated Scale</TabsTrigger>
                     <TabsTrigger value="preview">Preview</TabsTrigger>
@@ -414,7 +415,7 @@ const TypographyScaleCalculator = () => {
                     <Textarea
                       value={cssOutput}
                       readOnly
-                      className="w-full h-64 font-mono text-sm"
+                      className="w-full h-full font-mono text-sm"
                     />
                   </TabsContent>
                 </Tabs>
