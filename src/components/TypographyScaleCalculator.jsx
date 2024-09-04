@@ -102,7 +102,6 @@ const TypographyScaleCalculator = () => {
   const [isAdvanced, setIsAdvanced] = useState(false);
   const [cssOutput, setCssOutput] = useState('');
   const [elementSteps, setElementSteps] = useState(presetGroups['Default']);
-  const [compareScales, setCompareScales] = useState(false);
   const [selectedPresetGroup, setSelectedPresetGroup] = useState('Default');
   const [selectedPreviewPreset, setSelectedPreviewPreset] = useState('Default');
   const { theme, setTheme } = useTheme();
@@ -114,14 +113,6 @@ const TypographyScaleCalculator = () => {
   const [maxBaseSize, setMaxBaseSize] = useState(18);
   const [maxScreenWidth, setMaxScreenWidth] = useState(1920);
   const [maxScaleRatio, setMaxScaleRatio] = useState('Perfect Fourth');
-
-  // Compare scale settings
-  const [compareMinBaseSize, setCompareMinBaseSize] = useState(14);
-  const [compareMinScreenWidth, setCompareMinScreenWidth] = useState(320);
-  const [compareMinScaleRatio, setCompareMinScaleRatio] = useState('Minor Third');
-  const [compareMaxBaseSize, setCompareMaxBaseSize] = useState(18);
-  const [compareMaxScreenWidth, setCompareMaxScreenWidth] = useState(1920);
-  const [compareMaxScaleRatio, setCompareMaxScaleRatio] = useState('Perfect Fourth');
 
   const { data: fonts, isLoading, error } = useQuery({
     queryKey: ['fonts'],
@@ -343,91 +334,6 @@ const TypographyScaleCalculator = () => {
                         </SelectContent>
                       </Select>
                     </div>
-                  </div>
-
-                  <div className="mt-6">
-                    <div className="flex items-center space-x-2 mb-4">
-                      <Switch
-                        id="compare-scales"
-                        checked={compareScales}
-                        onCheckedChange={setCompareScales}
-                      />
-                      <Label htmlFor="compare-scales">Compare Scales</Label>
-                    </div>
-                    {compareScales && (
-                      <div className="space-y-4 mt-4">
-                        <div className="w-full">
-                          <Label htmlFor="compareMinBaseSize" className="block mb-1">Compare Min Base Size (px)</Label>
-                          <Input
-                            id="compareMinBaseSize"
-                            type="number"
-                            value={compareMinBaseSize}
-                            onChange={(e) => setCompareMinBaseSize(Number(e.target.value))}
-                            className="w-full bg-neutral-800 text-neutral-100"
-                          />
-                        </div>
-                        <div className="w-full">
-                          <Label htmlFor="compareMinScreenWidth" className="block mb-1">Compare Min Screen Width (px)</Label>
-                          <Input
-                            id="compareMinScreenWidth"
-                            type="number"
-                            value={compareMinScreenWidth}
-                            onChange={(e) => setCompareMinScreenWidth(Number(e.target.value))}
-                            className="w-full bg-neutral-800 text-neutral-100"
-                          />
-                        </div>
-                        <div className="w-full">
-                          <Label htmlFor="compareMinScaleRatio" className="block mb-1">Compare Min Scale Ratio</Label>
-                          <Select value={compareMinScaleRatio} onValueChange={setCompareMinScaleRatio}>
-                            <SelectTrigger className="w-full bg-neutral-800 text-neutral-100">
-                              <SelectValue>{compareMinScaleRatio}</SelectValue>
-                            </SelectTrigger>
-                            <SelectContent>
-                              {Object.keys(scales).map((scale) => (
-                                <SelectItem key={scale} value={scale}>
-                                  {scale}
-                                </SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
-                        </div>
-                        <div className="w-full">
-                          <Label htmlFor="compareMaxBaseSize" className="block mb-1">Compare Max Base Size (px)</Label>
-                          <Input
-                            id="compareMaxBaseSize"
-                            type="number"
-                            value={compareMaxBaseSize}
-                            onChange={(e) => setCompareMaxBaseSize(Number(e.target.value))}
-                            className="w-full bg-neutral-800 text-neutral-100"
-                          />
-                        </div>
-                        <div className="w-full">
-                          <Label htmlFor="compareMaxScreenWidth" className="block mb-1">Compare Max Screen Width (px)</Label>
-                          <Input
-                            id="compareMaxScreenWidth"
-                            type="number"
-                            value={compareMaxScreenWidth}
-                            onChange={(e) => setCompareMaxScreenWidth(Number(e.target.value))}
-                            className="w-full bg-neutral-800 text-neutral-100"
-                          />
-                        </div>
-                        <div className="w-full">
-                          <Label htmlFor="compareMaxScaleRatio" className="block mb-1">Compare Max Scale Ratio</Label>
-                          <Select value={compareMaxScaleRatio} onValueChange={setCompareMaxScaleRatio}>
-                            <SelectTrigger className="w-full bg-neutral-800 text-neutral-100">
-                              <SelectValue>{compareMaxScaleRatio}</SelectValue>
-                            </SelectTrigger>
-                            <SelectContent>
-                              {Object.keys(scales).map((scale) => (
-                                <SelectItem key={scale} value={scale}>
-                                  {scale}
-                                </SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
-                        </div>
-                      </div>
-                    )}
                   </div>
 
                   <div className="mt-6">
