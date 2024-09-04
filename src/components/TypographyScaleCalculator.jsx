@@ -85,7 +85,7 @@ const previewPresets = {
     'h5': 'Color Theory in Typography',
     'h6': 'Responsive Typography Techniques',
     'blockquote': '"Typography is the craft of endowing human language with a durable visual form." - Robert Bringhurst',
-    'p': 'Typography is more than just choosing a pretty font. It's about communication, readability, and creating a visual hierarchy that guides the reader through your content. Good typography can make the difference between a reader staying engaged or clicking away.',
+    'p': `Typography is more than just choosing a pretty font. It's about communication, readability, and creating a visual hierarchy that guides the reader through your content. Good typography can make the difference between a reader staying engaged or clicking away.`,
     'caption': 'Fig. 1: Examples of different typefaces and their emotional impact',
     'small': 'This article was last updated on May 15, 2023',
     'micro': '© 2023 Typography Experts Inc.'
