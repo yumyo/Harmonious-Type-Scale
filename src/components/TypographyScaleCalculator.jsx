@@ -207,6 +207,17 @@ const TypographyScaleCalculator = () => {
     }
 
     setCssOutput(css);
+
+    // Apply the generated CSS to the document
+    const styleElement = document.getElementById('typography-scale-styles');
+    if (styleElement) {
+      styleElement.textContent = css;
+    } else {
+      const newStyleElement = document.createElement('style');
+      newStyleElement.id = 'typography-scale-styles';
+      newStyleElement.textContent = css;
+      document.head.appendChild(newStyleElement);
+    }
   };
 
   const handleSave = () => {
@@ -527,17 +538,11 @@ const TypographyScaleCalculator = () => {
                       </div>
                       <div className="w-full">
                         {htmlElements.map((element) => {
-                          const step = elementSteps[element];
-                          const scaleItem = generatedScale.find(item => item.step === step);
                           const Element = element === 'display' || element === 'title' || element === 'micro' ? 'div' : element;
                           return (
                             <Element
                               key={element}
                               className={`${element === 'display' || element === 'title' || element === 'micro' ? element : ''} w-full mb-4`}
-                              style={{
-                                fontSize: `var(--${cssVariablePrefix}-${step})`,
-                                lineHeight: `var(--lh-${step})`
-                              }}
                             >
                               {previewPresets[selectedPreviewPreset][element]}
                             </Element>
