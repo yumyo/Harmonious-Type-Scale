@@ -162,9 +162,11 @@ const TypographyScaleCalculator = () => {
         const yAxisIntersection = minSize - slope * minScreenWidth;
         size = `calc(${yAxisIntersection.toFixed(2)}px + ${(slope * 100).toFixed(2)}vw)`;
       } else {
-        const minSizeInSelectedUnit = useRem ? (minSize / remBaseSize).toFixed(4) + 'rem' : minSize.toFixed(2) + 'px';
-        const maxSizeInSelectedUnit = useRem ? (maxSize / remBaseSize).toFixed(4) + 'rem' : maxSize.toFixed(2) + 'px';
-        size = `clamp(${minSizeInSelectedUnit}, calc(${minSizeInSelectedUnit} + (${maxSize.toFixed(2)} - ${minSize.toFixed(2)}) * ((100vw - ${minScreenWidth}px) / (${maxScreenWidth} - ${minScreenWidth}))), ${maxSizeInSelectedUnit})`;
+        const minSizeRem = useRem ? (minSize / remBaseSize).toFixed(4) : (minSize / remBaseSize).toFixed(4) + 'rem';
+        const maxSizeRem = useRem ? (maxSize / remBaseSize).toFixed(4) : (maxSize / remBaseSize).toFixed(4) + 'rem';
+        const minSizeUnit = useRem ? minSizeRem + 'rem' : minSize.toFixed(2) + 'px';
+        const maxSizeUnit = useRem ? maxSizeRem + 'rem' : maxSize.toFixed(2) + 'px';
+        size = `clamp(${minSizeUnit}, calc(${minSizeUnit} + (${maxSizeRem} - ${minSizeRem}) * ((100vw - ${minScreenWidth}px) / (${maxScreenWidth}px - ${minScreenWidth}px))), ${maxSizeUnit})`;
       }
 
       const lineHeight = `calc(${minLineHeight} + (${maxLineHeight} - ${minLineHeight}) * ((100vw - ${minScreenWidth}px) / (${maxScreenWidth} - ${minScreenWidth})))`;
