@@ -59,6 +59,39 @@ const presetGroups = {
   }
 };
 
+const previewPresets = {
+  'Default': {
+    'display': 'Display Text',
+    'title': 'Title Text',
+    'h1': 'Heading 1',
+    'h2': 'Heading 2',
+    'h3': 'Heading 3',
+    'h4': 'Heading 4',
+    'h5': 'Heading 5',
+    'h6': 'Heading 6',
+    'blockquote': 'This is a blockquote. It stands out from regular text.',
+    'p': 'This is a paragraph of text. It demonstrates the base font size and how it looks in a block of content.',
+    'caption': 'This is a caption, often used for images or tables.',
+    'small': 'This is small text, used for fine print or less important information.',
+    'micro': 'Micro text for very small details.'
+  },
+  'Blog Post': {
+    'display': 'The Art of Typography',
+    'title': 'Mastering the Craft of Beautiful Text',
+    'h1': 'Introduction to Typography',
+    'h2': 'The Importance of Font Selection',
+    'h3': 'Understanding Kerning and Tracking',
+    'h4': 'The Role of White Space',
+    'h5': 'Color Theory in Typography',
+    'h6': 'Responsive Typography Techniques',
+    'blockquote': '"Typography is the craft of endowing human language with a durable visual form." - Robert Bringhurst',
+    'p': 'Typography is more than just choosing a pretty font. It's about communication, readability, and creating a visual hierarchy that guides the reader through your content. Good typography can make the difference between a reader staying engaged or clicking away.',
+    'caption': 'Fig. 1: Examples of different typefaces and their emotional impact',
+    'small': 'This article was last updated on May 15, 2023',
+    'micro': '© 2023 Typography Experts Inc.'
+  }
+};
+
 const TypographyScaleCalculator = () => {
   const [baseSize, setBaseSize] = useState(16);
   const [selectedScale, setSelectedScale] = useState('Perfect Fourth');
@@ -70,8 +103,8 @@ const TypographyScaleCalculator = () => {
   const [cssOutput, setCssOutput] = useState('');
   const [elementSteps, setElementSteps] = useState(presetGroups['Default']);
   const [compareScales, setCompareScales] = useState(false);
-  const [previewText, setPreviewText] = useState('The quick brown fox jumps over the lazy dog');
   const [selectedPresetGroup, setSelectedPresetGroup] = useState('Default');
+  const [selectedPreviewPreset, setSelectedPreviewPreset] = useState('Default');
   const { theme, setTheme } = useTheme();
 
   // Scale settings
@@ -166,24 +199,30 @@ const TypographyScaleCalculator = () => {
     setElementSteps(presetGroups[group]);
   };
 
-  const handlePreviewTextChange = (element, text) => {
-    setPreviewText(prevState => ({
-      ...prevState,
-      [element]: text
-    }));
-  };
-
   if (isLoading) return <div>Loading fonts...</div>;
   if (error) return <div>Error loading fonts: {error.message}</div>;
 
   return (
-    <div className="w-full h-screen px-4 py-4">
+    <div className="w-full h-screen p-4">
       <Card className="h-full">
         <CardContent className="p-0 h-full">
           <PanelGroup direction="horizontal" className="h-full">
             <Panel defaultSize={30} minSize={20} maxSize={40} className="h-full">
               <div className="p-4 h-full overflow-y-auto flex flex-col bg-neutral-950 text-neutral-100">
-                <h1 className="text-2xl font-bold mb-6">Harmonious Type Scale</h1>
+                <h1 className="text-2xl font-bold mb-4">Harmonious Type Scale</h1>
+                <div className="mb-4">
+                  <Label htmlFor="theme-toggle" className="mb-2 block">Theme</Label>
+                  <Select value={theme} onValueChange={setTheme}>
+                    <SelectTrigger id="theme-toggle" className="w-full bg-neutral-800 text-neutral-100">
+                      <SelectValue>{theme}</SelectValue>
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="light">Light</SelectItem>
+                      <SelectItem value="dark">Dark</SelectItem>
+                      <SelectItem value="system">System</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
                 <div className="flex-grow">
                   <div className="flex items-center space-x-2 mb-4">
                     <Switch
@@ -433,19 +472,6 @@ const TypographyScaleCalculator = () => {
                   </div>
                 </div>
                 <Button onClick={handleSave} className="mt-4 w-full">Save Scale</Button>
-                <div className="mt-4">
-                  <Label htmlFor="theme-toggle">Theme</Label>
-                  <Select value={theme} onValueChange={setTheme}>
-                    <SelectTrigger id="theme-toggle" className="w-full bg-neutral-800 text-neutral-100">
-                      <SelectValue>{theme}</SelectValue>
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="light">Light</SelectItem>
-                      <SelectItem value="dark">Dark</SelectItem>
-                      <SelectItem value="system">System</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
               </div>
             </Panel>
             <PanelResizeHandle className="w-2 bg-neutral-700 hover:bg-neutral-600 transition-colors" />
@@ -470,7 +496,21 @@ const TypographyScaleCalculator = () => {
                   </TabsContent>
                   <TabsContent value="preview" className="flex-grow overflow-y-auto px-4 py-4 mt-4">
                     <div style={{ fontFamily: selectedFont }} className="w-full">
-                      <h2 className="text-2xl font-bold mb-4">Font Preview: {selectedFont}</h2>
+                      <div className="flex justify-between items-center mb-4">
+                        <h2 className="text-2xl font-bold">Font Preview: {selectedFont}</h2>
+                        <Select value={selectedPreviewPreset} onValueChange={setSelectedPreviewPreset}>
+                          <SelectTrigger className="w-48 bg-neutral-800 text-neutral-100">
+                            <SelectValue>{selectedPreviewPreset}</SelectValue>
+                          </SelectTrigger>
+                          <SelectContent>
+                            {Object.keys(previewPresets).map((preset) => (
+                              <SelectItem key={preset} value={preset}>
+                                {preset}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
                       <div className="w-full">
                         {htmlElements.map((element) => {
                           const step = elementSteps[element];
@@ -479,13 +519,10 @@ const TypographyScaleCalculator = () => {
                           return (
                             <Element
                               key={element}
-                              className={`${element === 'display' || element === 'title' || element === 'micro' ? element : ''} w-full`}
+                              className={`${element === 'display' || element === 'title' || element === 'micro' ? element : ''} w-full mb-4`}
                               style={{ fontSize: scaleItem ? scaleItem.size : 'inherit' }}
-                              contentEditable
-                              onBlur={(e) => handlePreviewTextChange(element, e.target.textContent)}
-                              suppressContentEditableWarning={true}
                             >
-                              {element}: {previewText}
+                              {previewPresets[selectedPreviewPreset][element]}
                             </Element>
                           );
                         })}
