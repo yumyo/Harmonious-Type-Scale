@@ -106,7 +106,6 @@ const TypographyScaleCalculator = () => {
   const [selectedPreviewPreset, setSelectedPreviewPreset] = useState('Default');
   const { theme, setTheme } = useTheme();
 
-  // New state variables for additional options
   const [useRem, setUseRem] = useState(true);
   const [useCSSLocks, setUseCSSLocks] = useState(false);
   const [cssVariablePrefix, setCssVariablePrefix] = useState('fs');
@@ -115,7 +114,6 @@ const TypographyScaleCalculator = () => {
   const [maxLineHeight, setMaxLineHeight] = useState(1.5);
   const [remBaseSize, setRemBaseSize] = useState(16);
 
-  // Scale settings
   const [minBaseSize, setMinBaseSize] = useState(14);
   const [minScreenWidth, setMinScreenWidth] = useState(320);
   const [minScaleRatio, setMinScaleRatio] = useState('Minor Third');
@@ -162,11 +160,11 @@ const TypographyScaleCalculator = () => {
         const yAxisIntersection = minSize - slope * minScreenWidth;
         size = `calc(${yAxisIntersection.toFixed(2)}px + ${(slope * 100).toFixed(2)}vw)`;
       } else {
-        const minSizeRem = useRem ? (minSize / remBaseSize).toFixed(4) : (minSize / remBaseSize).toFixed(4) + 'rem';
-        const maxSizeRem = useRem ? (maxSize / remBaseSize).toFixed(4) : (maxSize / remBaseSize).toFixed(4) + 'rem';
-        const minSizeUnit = useRem ? minSizeRem + 'rem' : minSize.toFixed(2) + 'px';
-        const maxSizeUnit = useRem ? maxSizeRem + 'rem' : maxSize.toFixed(2) + 'px';
-        size = `clamp(${minSizeUnit}, calc(${minSizeUnit} + (${maxSizeRem} - ${minSizeRem}) * ((100vw - ${minScreenWidth}px) / (${maxScreenWidth}px - ${minScreenWidth}px))), ${maxSizeUnit})`;
+        const minSizeRem = useRem ? (minSize / remBaseSize).toFixed(4) : minSize.toFixed(2);
+        const maxSizeRem = useRem ? (maxSize / remBaseSize).toFixed(4) : maxSize.toFixed(2);
+        const minSizeUnit = useRem ? `${minSizeRem}rem` : `${minSizeRem}px`;
+        const maxSizeUnit = useRem ? `${maxSizeRem}rem` : `${maxSizeRem}px`;
+        size = `clamp(${minSizeUnit}, calc(${minSizeUnit} + (${maxSizeRem} - ${minSizeRem}) * ((100vw - ${minScreenWidth}px) / (${maxScreenWidth - minScreenWidth}))), ${maxSizeUnit})`;
       }
 
       const lineHeight = `calc(${minLineHeight} + (${maxLineHeight} - ${minLineHeight}) * ((100vw - ${minScreenWidth}px) / (${maxScreenWidth} - ${minScreenWidth})))`;
@@ -536,7 +534,10 @@ const TypographyScaleCalculator = () => {
                             <Element
                               key={element}
                               className={`${element === 'display' || element === 'title' || element === 'micro' ? element : ''} w-full mb-4`}
-                              style={{ fontSize: scaleItem ? scaleItem.size : 'inherit', lineHeight: scaleItem ? scaleItem.lineHeight : 'inherit' }}
+                              style={{
+                                fontSize: `var(--${cssVariablePrefix}-${step})`,
+                                lineHeight: `var(--lh-${step})`
+                              }}
                             >
                               {previewPresets[selectedPreviewPreset][element]}
                             </Element>
