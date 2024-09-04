@@ -11,7 +11,7 @@ import { Switch } from "@/components/ui/switch";
 import { toast } from "sonner";
 import { Textarea } from "@/components/ui/textarea";
 import { Panel, PanelGroup, PanelResizeHandle } from 'react-resizable-panels';
-import { useTheme } from 'next-themes';
+import { useTheme } from './ThemeProvider';
 
 const scales = {
   'Minor Second': 1.067,
