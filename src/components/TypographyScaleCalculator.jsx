@@ -106,6 +106,14 @@ const TypographyScaleCalculator = () => {
   const [selectedPreviewPreset, setSelectedPreviewPreset] = useState('Default');
   const { theme, setTheme } = useTheme();
 
+  // New state variables for additional options
+  const [useRem, setUseRem] = useState(true);
+  const [useCSSLocks, setUseCSSLocks] = useState(false);
+  const [cssVariablePrefix, setCssVariablePrefix] = useState('fs');
+  const [outputSassVariables, setOutputSassVariables] = useState(false);
+  const [minLineHeight, setMinLineHeight] = useState(1.2);
+  const [maxLineHeight, setMaxLineHeight] = useState(1.5);
+
   // Scale settings
   const [minBaseSize, setMinBaseSize] = useState(14);
   const [minScreenWidth, setMinScreenWidth] = useState(320);
@@ -128,7 +136,7 @@ const TypographyScaleCalculator = () => {
 
   useEffect(() => {
     generateScale();
-  }, [baseSize, selectedScale, positiveSteps, negativeSteps, isAdvanced, elementSteps, minBaseSize, minScreenWidth, minScaleRatio, maxBaseSize, maxScreenWidth, maxScaleRatio]);
+  }, [baseSize, selectedScale, positiveSteps, negativeSteps, isAdvanced, elementSteps, minBaseSize, minScreenWidth, minScaleRatio, maxBaseSize, maxScreenWidth, maxScaleRatio, useRem, useCSSLocks, cssVariablePrefix, outputSassVariables, minLineHeight, maxLineHeight]);
 
   useEffect(() => {
     if (selectedFont) {
@@ -146,8 +154,19 @@ const TypographyScaleCalculator = () => {
     for (let step = -negativeSteps; step <= positiveSteps; step++) {
       const minSize = minBaseSize * Math.pow(scales[minScaleRatio], step);
       const maxSize = maxBaseSize * Math.pow(scales[maxScaleRatio], step);
-      const clampedSize = `clamp(${minSize.toFixed(2)}px, calc(${minSize.toFixed(2)}px + (${maxSize.toFixed(2)} - ${minSize.toFixed(2)}) * ((100vw - ${minScreenWidth}px) / (${maxScreenWidth} - ${minScreenWidth}))), ${maxSize.toFixed(2)}px)`;
-      newScale.push({ step, size: clampedSize });
+      let size;
+      
+      if (useCSSLocks) {
+        const slope = (maxSize - minSize) / (maxScreenWidth - minScreenWidth);
+        const yAxisIntersection = minSize - slope * minScreenWidth;
+        size = `calc(${yAxisIntersection.toFixed(2)}${useRem ? 'rem' : 'px'} + ${(slope * 100).toFixed(2)}vw)`;
+      } else {
+        size = `clamp(${minSize.toFixed(2)}${useRem ? 'rem' : 'px'}, calc(${minSize.toFixed(2)}${useRem ? 'rem' : 'px'} + (${maxSize.toFixed(2)} - ${minSize.toFixed(2)}) * ((100vw - ${minScreenWidth}px) / (${maxScreenWidth} - ${minScreenWidth}))), ${maxSize.toFixed(2)}${useRem ? 'rem' : 'px'})`;
+      }
+
+      const lineHeight = `calc(${minLineHeight} + (${maxLineHeight} - ${minLineHeight}) * ((100vw - ${minScreenWidth}px) / (${maxScreenWidth} - ${minScreenWidth})))`;
+      
+      newScale.push({ step, size, lineHeight });
     }
 
     setGeneratedScale(newScale);
@@ -156,8 +175,9 @@ const TypographyScaleCalculator = () => {
 
   const generateCSSOutput = (scale) => {
     let css = ':root {\n';
-    scale.forEach(({ step, size }) => {
-      css += `  --step-${step}: ${size};\n`;
+    scale.forEach(({ step, size, lineHeight }) => {
+      css += `  --${cssVariablePrefix}-${step}: ${size};\n`;
+      css += `  --lh-${step}: ${lineHeight};\n`;
     });
     css += '}\n\n';
 
@@ -166,12 +186,20 @@ const TypographyScaleCalculator = () => {
       const scaleItem = scale.find(item => item.step === step);
       if (scaleItem) {
         if (element === 'display' || element === 'title' || element === 'micro') {
-          css += `.${element} {\n  font-size: var(--step-${step});\n}\n\n`;
+          css += `.${element} {\n  font-size: var(--${cssVariablePrefix}-${step});\n  line-height: var(--lh-${step});\n}\n\n`;
         } else {
-          css += `${element} {\n  font-size: var(--step-${step});\n}\n\n`;
+          css += `${element} {\n  font-size: var(--${cssVariablePrefix}-${step});\n  line-height: var(--lh-${step});\n}\n\n`;
         }
       }
     });
+
+    if (outputSassVariables) {
+      css += '// SASS Variables\n';
+      scale.forEach(({ step, size, lineHeight }) => {
+        css += `$${cssVariablePrefix}-${step}: ${size};\n`;
+        css += `$lh-${step}: ${lineHeight};\n`;
+      });
+    }
 
     setCssOutput(css);
   };
@@ -213,6 +241,70 @@ const TypographyScaleCalculator = () => {
                       <SelectItem value="system">System</SelectItem>
                     </SelectContent>
                   </Select>
+                </div>
+                <div className="mb-4">
+                  <Label htmlFor="unit-toggle" className="mb-2 block">Unit</Label>
+                  <div className="flex items-center space-x-2">
+                    <Switch
+                      id="unit-toggle"
+                      checked={useRem}
+                      onCheckedChange={setUseRem}
+                    />
+                    <Label htmlFor="unit-toggle">{useRem ? 'Rem' : 'Pixel'}</Label>
+                  </div>
+                </div>
+                <div className="mb-4">
+                  <Label htmlFor="css-locks-toggle" className="mb-2 block">Use CSS Locks</Label>
+                  <div className="flex items-center space-x-2">
+                    <Switch
+                      id="css-locks-toggle"
+                      checked={useCSSLocks}
+                      onCheckedChange={setUseCSSLocks}
+                    />
+                    <Label htmlFor="css-locks-toggle">{useCSSLocks ? 'CSS Locks' : 'Clamp'}</Label>
+                  </div>
+                </div>
+                <div className="mb-4">
+                  <Label htmlFor="css-variable-prefix" className="mb-2 block">CSS Variable Prefix</Label>
+                  <Input
+                    id="css-variable-prefix"
+                    value={cssVariablePrefix}
+                    onChange={(e) => setCssVariablePrefix(e.target.value)}
+                    className="w-full bg-neutral-800 text-neutral-100"
+                  />
+                </div>
+                <div className="mb-4">
+                  <Label htmlFor="sass-variables-toggle" className="mb-2 block">Output SASS Variables</Label>
+                  <div className="flex items-center space-x-2">
+                    <Switch
+                      id="sass-variables-toggle"
+                      checked={outputSassVariables}
+                      onCheckedChange={setOutputSassVariables}
+                    />
+                    <Label htmlFor="sass-variables-toggle">{outputSassVariables ? 'Include SASS Variables' : 'CSS Only'}</Label>
+                  </div>
+                </div>
+                <div className="mb-4">
+                  <Label htmlFor="min-line-height" className="mb-2 block">Min Line Height</Label>
+                  <Input
+                    id="min-line-height"
+                    type="number"
+                    step="0.1"
+                    value={minLineHeight}
+                    onChange={(e) => setMinLineHeight(Number(e.target.value))}
+                    className="w-full bg-neutral-800 text-neutral-100"
+                  />
+                </div>
+                <div className="mb-4">
+                  <Label htmlFor="max-line-height" className="mb-2 block">Max Line Height</Label>
+                  <Input
+                    id="max-line-height"
+                    type="number"
+                    step="0.1"
+                    value={maxLineHeight}
+                    onChange={(e) => setMaxLineHeight(Number(e.target.value))}
+                    className="w-full bg-neutral-800 text-neutral-100"
+                  />
                 </div>
                 <div className="flex-grow">
                   <div className="flex items-center space-x-2 mb-4">
@@ -392,10 +484,11 @@ const TypographyScaleCalculator = () => {
                   <TabsContent value="scale" className="flex-grow overflow-y-auto px-4 py-4 mt-4">
                     <div className="space-y-2">
                       <h3 className="font-semibold">Scale</h3>
-                      {generatedScale.map(({ step, size }) => (
+                      {generatedScale.map(({ step, size, lineHeight }) => (
                         <div key={step} className="flex justify-between items-center">
                           <span>Step {step}</span>
                           <code>{size}</code>
+                          <code>LH: {lineHeight}</code>
                         </div>
                       ))}
                     </div>
@@ -426,7 +519,7 @@ const TypographyScaleCalculator = () => {
                             <Element
                               key={element}
                               className={`${element === 'display' || element === 'title' || element === 'micro' ? element : ''} w-full mb-4`}
-                              style={{ fontSize: scaleItem ? scaleItem.size : 'inherit' }}
+                              style={{ fontSize: scaleItem ? scaleItem.size : 'inherit', lineHeight: scaleItem ? scaleItem.lineHeight : 'inherit' }}
                             >
                               {previewPresets[selectedPreviewPreset][element]}
                             </Element>
