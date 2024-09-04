@@ -113,6 +113,7 @@ const TypographyScaleCalculator = () => {
   const [outputSassVariables, setOutputSassVariables] = useState(false);
   const [minLineHeight, setMinLineHeight] = useState(1.2);
   const [maxLineHeight, setMaxLineHeight] = useState(1.5);
+  const [remBaseSize, setRemBaseSize] = useState(16);
 
   // Scale settings
   const [minBaseSize, setMinBaseSize] = useState(14);
@@ -136,7 +137,7 @@ const TypographyScaleCalculator = () => {
 
   useEffect(() => {
     generateScale();
-  }, [baseSize, selectedScale, positiveSteps, negativeSteps, isAdvanced, elementSteps, minBaseSize, minScreenWidth, minScaleRatio, maxBaseSize, maxScreenWidth, maxScaleRatio, useRem, useCSSLocks, cssVariablePrefix, outputSassVariables, minLineHeight, maxLineHeight]);
+  }, [baseSize, selectedScale, positiveSteps, negativeSteps, isAdvanced, elementSteps, minBaseSize, minScreenWidth, minScaleRatio, maxBaseSize, maxScreenWidth, maxScaleRatio, useRem, useCSSLocks, cssVariablePrefix, outputSassVariables, minLineHeight, maxLineHeight, remBaseSize]);
 
   useEffect(() => {
     if (selectedFont) {
@@ -161,7 +162,9 @@ const TypographyScaleCalculator = () => {
         const yAxisIntersection = minSize - slope * minScreenWidth;
         size = `calc(${yAxisIntersection.toFixed(2)}${useRem ? 'rem' : 'px'} + ${(slope * 100).toFixed(2)}vw)`;
       } else {
-        size = `clamp(${minSize.toFixed(2)}${useRem ? 'rem' : 'px'}, calc(${minSize.toFixed(2)}${useRem ? 'rem' : 'px'} + (${maxSize.toFixed(2)} - ${minSize.toFixed(2)}) * ((100vw - ${minScreenWidth}px) / (${maxScreenWidth} - ${minScreenWidth}))), ${maxSize.toFixed(2)}${useRem ? 'rem' : 'px'})`;
+        const minSizeInSelectedUnit = useRem ? minSize / remBaseSize : minSize;
+        const maxSizeInSelectedUnit = useRem ? maxSize / remBaseSize : maxSize;
+        size = `clamp(${minSizeInSelectedUnit.toFixed(2)}${useRem ? 'rem' : 'px'}, calc(${minSizeInSelectedUnit.toFixed(2)}${useRem ? 'rem' : 'px'} + (${maxSizeInSelectedUnit.toFixed(2)} - ${minSizeInSelectedUnit.toFixed(2)}) * ((100vw - ${minScreenWidth}px) / (${maxScreenWidth} - ${minScreenWidth}))), ${maxSizeInSelectedUnit.toFixed(2)}${useRem ? 'rem' : 'px'})`;
       }
 
       const lineHeight = `calc(${minLineHeight} + (${maxLineHeight} - ${minLineHeight}) * ((100vw - ${minScreenWidth}px) / (${maxScreenWidth} - ${minScreenWidth})))`;
@@ -175,6 +178,7 @@ const TypographyScaleCalculator = () => {
 
   const generateCSSOutput = (scale) => {
     let css = ':root {\n';
+    css += `  --rem-base: ${remBaseSize}px;\n`;
     scale.forEach(({ step, size, lineHeight }) => {
       css += `  --${cssVariablePrefix}-${step}: ${size};\n`;
       css += `  --lh-${step}: ${lineHeight};\n`;
@@ -195,6 +199,7 @@ const TypographyScaleCalculator = () => {
 
     if (outputSassVariables) {
       css += '// SASS Variables\n';
+      css += `$rem-base: ${remBaseSize}px;\n`;
       scale.forEach(({ step, size, lineHeight }) => {
         css += `$${cssVariablePrefix}-${step}: ${size};\n`;
         css += `$lh-${step}: ${lineHeight};\n`;
@@ -252,6 +257,16 @@ const TypographyScaleCalculator = () => {
                     />
                     <Label htmlFor="unit-toggle">{useRem ? 'Rem' : 'Pixel'}</Label>
                   </div>
+                </div>
+                <div className="mb-4">
+                  <Label htmlFor="rem-base-size" className="mb-2 block">1 Rem = X Pixels</Label>
+                  <Input
+                    id="rem-base-size"
+                    type="number"
+                    value={remBaseSize}
+                    onChange={(e) => setRemBaseSize(Number(e.target.value))}
+                    className="w-full bg-neutral-800 text-neutral-100"
+                  />
                 </div>
                 <div className="mb-4">
                   <Label htmlFor="css-locks-toggle" className="mb-2 block">Use CSS Locks</Label>
