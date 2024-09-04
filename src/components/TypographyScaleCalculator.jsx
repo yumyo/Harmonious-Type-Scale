@@ -160,11 +160,11 @@ const TypographyScaleCalculator = () => {
       if (useCSSLocks) {
         const slope = (maxSize - minSize) / (maxScreenWidth - minScreenWidth);
         const yAxisIntersection = minSize - slope * minScreenWidth;
-        size = `calc(${yAxisIntersection.toFixed(2)}${useRem ? 'rem' : 'px'} + ${(slope * 100).toFixed(2)}vw)`;
+        size = `calc(${yAxisIntersection.toFixed(2)}px + ${(slope * 100).toFixed(2)}vw)`;
       } else {
-        const minSizeInSelectedUnit = useRem ? minSize / remBaseSize : minSize;
-        const maxSizeInSelectedUnit = useRem ? maxSize / remBaseSize : maxSize;
-        size = `clamp(${minSizeInSelectedUnit.toFixed(2)}${useRem ? 'rem' : 'px'}, calc(${minSizeInSelectedUnit.toFixed(2)}${useRem ? 'rem' : 'px'} + (${maxSizeInSelectedUnit.toFixed(2)} - ${minSizeInSelectedUnit.toFixed(2)}) * ((100vw - ${minScreenWidth}px) / (${maxScreenWidth} - ${minScreenWidth}))), ${maxSizeInSelectedUnit.toFixed(2)}${useRem ? 'rem' : 'px'})`;
+        const minSizeInSelectedUnit = useRem ? (minSize / remBaseSize).toFixed(4) + 'rem' : minSize.toFixed(2) + 'px';
+        const maxSizeInSelectedUnit = useRem ? (maxSize / remBaseSize).toFixed(4) + 'rem' : maxSize.toFixed(2) + 'px';
+        size = `clamp(${minSizeInSelectedUnit}, calc(${minSizeInSelectedUnit} + (${maxSize.toFixed(2)} - ${minSize.toFixed(2)}) * ((100vw - ${minScreenWidth}px) / (${maxScreenWidth} - ${minScreenWidth}))), ${maxSizeInSelectedUnit})`;
       }
 
       const lineHeight = `calc(${minLineHeight} + (${maxLineHeight} - ${minLineHeight}) * ((100vw - ${minScreenWidth}px) / (${maxScreenWidth} - ${minScreenWidth})))`;
