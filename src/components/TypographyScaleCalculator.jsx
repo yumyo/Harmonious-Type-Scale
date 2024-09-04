@@ -62,21 +62,33 @@ const presetGroups = {
 const TypographyScaleCalculator = () => {
   const [baseSize, setBaseSize] = useState(16);
   const [selectedScale, setSelectedScale] = useState('Perfect Fourth');
-  const [selectedMobileScale, setSelectedMobileScale] = useState('Perfect Fourth');
   const [positiveSteps, setPositiveSteps] = useState(9);
   const [negativeSteps, setNegativeSteps] = useState(3);
   const [selectedFont, setSelectedFont] = useState('');
   const [generatedScale, setGeneratedScale] = useState([]);
-  const [generatedMobileScale, setGeneratedMobileScale] = useState([]);
   const [isAdvanced, setIsAdvanced] = useState(false);
   const [cssOutput, setCssOutput] = useState('');
   const [elementSteps, setElementSteps] = useState(presetGroups['Default']);
-  const [useMobileScale, setUseMobileScale] = useState(false);
-  const [mobileBaseSize, setMobileBaseSize] = useState(14);
-  const [breakpoint, setBreakpoint] = useState(768);
+  const [compareScales, setCompareScales] = useState(false);
   const [previewText, setPreviewText] = useState('The quick brown fox jumps over the lazy dog');
   const [selectedPresetGroup, setSelectedPresetGroup] = useState('Default');
   const { theme, setTheme } = useTheme();
+
+  // Scale settings
+  const [minBaseSize, setMinBaseSize] = useState(14);
+  const [minScreenWidth, setMinScreenWidth] = useState(320);
+  const [minScaleRatio, setMinScaleRatio] = useState('Minor Third');
+  const [maxBaseSize, setMaxBaseSize] = useState(18);
+  const [maxScreenWidth, setMaxScreenWidth] = useState(1920);
+  const [maxScaleRatio, setMaxScaleRatio] = useState('Perfect Fourth');
+
+  // Compare scale settings
+  const [compareMinBaseSize, setCompareMinBaseSize] = useState(14);
+  const [compareMinScreenWidth, setCompareMinScreenWidth] = useState(320);
+  const [compareMinScaleRatio, setCompareMinScaleRatio] = useState('Minor Third');
+  const [compareMaxBaseSize, setCompareMaxBaseSize] = useState(18);
+  const [compareMaxScreenWidth, setCompareMaxScreenWidth] = useState(1920);
+  const [compareMaxScaleRatio, setCompareMaxScaleRatio] = useState('Perfect Fourth');
 
   const { data: fonts, isLoading, error } = useQuery({
     queryKey: ['fonts'],
@@ -92,7 +104,7 @@ const TypographyScaleCalculator = () => {
 
   useEffect(() => {
     generateScale();
-  }, [baseSize, mobileBaseSize, selectedScale, selectedMobileScale, positiveSteps, negativeSteps, isAdvanced, elementSteps, useMobileScale, breakpoint]);
+  }, [baseSize, selectedScale, positiveSteps, negativeSteps, isAdvanced, elementSteps, minBaseSize, minScreenWidth, minScaleRatio, maxBaseSize, maxScreenWidth, maxScaleRatio]);
 
   useEffect(() => {
     if (selectedFont) {
@@ -103,85 +115,31 @@ const TypographyScaleCalculator = () => {
     }
   }, [selectedFont]);
 
-  const nthRoot = (n, degree) => {
-    return Math.pow(n, 1 / degree);
-  };
-
   const generateScale = () => {
-    const desktopScaleValue = scales[selectedScale];
-    const mobileScaleValue = scales[selectedMobileScale];
-    const desktopScale = generateScaleForBaseSize(baseSize, desktopScaleValue);
-    setGeneratedScale(desktopScale);
-
-    if (useMobileScale) {
-      const mobileScale = generateScaleForBaseSize(mobileBaseSize, mobileScaleValue);
-      setGeneratedMobileScale(mobileScale);
-      generateCSSOutput(desktopScale, mobileScale);
-    } else {
-      generateCSSOutput(desktopScale);
-    }
-  };
-
-  const generateScaleForBaseSize = (size, scaleValue) => {
     const newScale = [];
-    const totalSteps = positiveSteps + negativeSteps + 1; // +1 for the base step
+    const totalSteps = positiveSteps + negativeSteps + 1;
 
-    if (isAdvanced) {
-      let a = size;
-      const b = size;
-      const ratio = scaleValue;
-
-      for (let step = -negativeSteps; step <= positiveSteps; step++) {
-        if (step < 0) {
-          a = a / nthRoot(ratio, totalSteps);
-        } else if (step === 0) {
-          a = b;
-        } else {
-          a = a * nthRoot(ratio, totalSteps);
-        }
-        const clampedSize = `clamp(${(a * 0.75).toFixed(2)}px, ${(a / 16).toFixed(2)}rem, ${(a * 1.25).toFixed(2)}px)`;
-        newScale.push({ step, size: clampedSize });
-      }
-    } else {
-      // Generate negative steps
-      for (let i = negativeSteps; i > 0; i--) {
-        const stepSize = size * Math.pow(scaleValue, -i);
-        const clampedSize = `clamp(${(stepSize * 0.75).toFixed(2)}px, ${(stepSize / 16).toFixed(2)}rem, ${(stepSize * 1.25).toFixed(2)}px)`;
-        newScale.push({ step: -i, size: clampedSize });
-      }
-
-      // Add base size (step 0)
-      newScale.push({ step: 0, size: `${size}px` });
-
-      // Generate positive steps
-      for (let i = 1; i <= positiveSteps; i++) {
-        const stepSize = size * Math.pow(scaleValue, i);
-        const clampedSize = `clamp(${(stepSize * 0.75).toFixed(2)}px, ${(stepSize / 16).toFixed(2)}rem, ${(stepSize * 1.25).toFixed(2)}px)`;
-        newScale.push({ step: i, size: clampedSize });
-      }
+    for (let step = -negativeSteps; step <= positiveSteps; step++) {
+      const minSize = minBaseSize * Math.pow(scales[minScaleRatio], step);
+      const maxSize = maxBaseSize * Math.pow(scales[maxScaleRatio], step);
+      const clampedSize = `clamp(${minSize.toFixed(2)}px, calc(${minSize.toFixed(2)}px + (${maxSize.toFixed(2)} - ${minSize.toFixed(2)}) * ((100vw - ${minScreenWidth}px) / (${maxScreenWidth} - ${minScreenWidth}))), ${maxSize.toFixed(2)}px)`;
+      newScale.push({ step, size: clampedSize });
     }
 
-    return newScale;
+    setGeneratedScale(newScale);
+    generateCSSOutput(newScale);
   };
 
-  const generateCSSOutput = (desktopScale, mobileScale = null) => {
+  const generateCSSOutput = (scale) => {
     let css = ':root {\n';
-    desktopScale.forEach(({ step, size }) => {
+    scale.forEach(({ step, size }) => {
       css += `  --step-${step}: ${size};\n`;
     });
     css += '}\n\n';
 
-    if (mobileScale) {
-      css += `@media (max-width: ${breakpoint}px) {\n  :root {\n`;
-      mobileScale.forEach(({ step, size }) => {
-        css += `    --step-${step}: ${size};\n`;
-      });
-      css += '  }\n}\n\n';
-    }
-
     htmlElements.forEach((element) => {
       const step = elementSteps[element];
-      const scaleItem = desktopScale.find(item => item.step === step);
+      const scaleItem = scale.find(item => item.step === step);
       if (scaleItem) {
         if (element === 'display' || element === 'title' || element === 'micro') {
           css += `.${element} {\n  font-size: var(--step-${step});\n}\n\n`;
@@ -219,12 +177,12 @@ const TypographyScaleCalculator = () => {
   if (error) return <div>Error loading fonts: {error.message}</div>;
 
   return (
-    <div className="w-full h-screen">
+    <div className="w-full h-screen px-4 py-4">
       <Card className="h-full">
         <CardContent className="p-0 h-full">
           <PanelGroup direction="horizontal" className="h-full">
             <Panel defaultSize={30} minSize={20} maxSize={40} className="h-full">
-              <div className="p-4 h-full overflow-y-auto flex flex-col bg-neutral-900 dark:bg-neutral-950 text-neutral-100">
+              <div className="p-4 h-full overflow-y-auto flex flex-col bg-neutral-950 text-neutral-100">
                 <h1 className="text-2xl font-bold mb-6">Harmonious Type Scale</h1>
                 <div className="flex-grow">
                   <div className="flex items-center space-x-2 mb-4">
@@ -238,20 +196,65 @@ const TypographyScaleCalculator = () => {
 
                   <div className="space-y-4">
                     <div className="w-full">
-                      <Label htmlFor="baseSize" className="block mb-1">Base Size (px)</Label>
+                      <Label htmlFor="minBaseSize" className="block mb-1">Min Base Size (px)</Label>
                       <Input
-                        id="baseSize"
+                        id="minBaseSize"
                         type="number"
-                        value={baseSize}
-                        onChange={(e) => setBaseSize(Number(e.target.value))}
-                        className="w-full"
+                        value={minBaseSize}
+                        onChange={(e) => setMinBaseSize(Number(e.target.value))}
+                        className="w-full bg-neutral-800 text-neutral-100"
                       />
                     </div>
                     <div className="w-full">
-                      <Label htmlFor="scale" className="block mb-1">Scale</Label>
-                      <Select value={selectedScale} onValueChange={setSelectedScale}>
-                        <SelectTrigger className="w-full">
-                          <SelectValue>{selectedScale}</SelectValue>
+                      <Label htmlFor="minScreenWidth" className="block mb-1">Min Screen Width (px)</Label>
+                      <Input
+                        id="minScreenWidth"
+                        type="number"
+                        value={minScreenWidth}
+                        onChange={(e) => setMinScreenWidth(Number(e.target.value))}
+                        className="w-full bg-neutral-800 text-neutral-100"
+                      />
+                    </div>
+                    <div className="w-full">
+                      <Label htmlFor="minScaleRatio" className="block mb-1">Min Scale Ratio</Label>
+                      <Select value={minScaleRatio} onValueChange={setMinScaleRatio}>
+                        <SelectTrigger className="w-full bg-neutral-800 text-neutral-100">
+                          <SelectValue>{minScaleRatio}</SelectValue>
+                        </SelectTrigger>
+                        <SelectContent>
+                          {Object.keys(scales).map((scale) => (
+                            <SelectItem key={scale} value={scale}>
+                              {scale}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div className="w-full">
+                      <Label htmlFor="maxBaseSize" className="block mb-1">Max Base Size (px)</Label>
+                      <Input
+                        id="maxBaseSize"
+                        type="number"
+                        value={maxBaseSize}
+                        onChange={(e) => setMaxBaseSize(Number(e.target.value))}
+                        className="w-full bg-neutral-800 text-neutral-100"
+                      />
+                    </div>
+                    <div className="w-full">
+                      <Label htmlFor="maxScreenWidth" className="block mb-1">Max Screen Width (px)</Label>
+                      <Input
+                        id="maxScreenWidth"
+                        type="number"
+                        value={maxScreenWidth}
+                        onChange={(e) => setMaxScreenWidth(Number(e.target.value))}
+                        className="w-full bg-neutral-800 text-neutral-100"
+                      />
+                    </div>
+                    <div className="w-full">
+                      <Label htmlFor="maxScaleRatio" className="block mb-1">Max Scale Ratio</Label>
+                      <Select value={maxScaleRatio} onValueChange={setMaxScaleRatio}>
+                        <SelectTrigger className="w-full bg-neutral-800 text-neutral-100">
+                          <SelectValue>{maxScaleRatio}</SelectValue>
                         </SelectTrigger>
                         <SelectContent>
                           {Object.keys(scales).map((scale) => (
@@ -289,7 +292,7 @@ const TypographyScaleCalculator = () => {
                     <div className="w-full">
                       <Label htmlFor="font" className="block mb-1">Font</Label>
                       <Select value={selectedFont} onValueChange={setSelectedFont}>
-                        <SelectTrigger className="w-full">
+                        <SelectTrigger className="w-full bg-neutral-800 text-neutral-100">
                           <SelectValue>{selectedFont || 'Select a font'}</SelectValue>
                         </SelectTrigger>
                         <SelectContent>
@@ -306,29 +309,39 @@ const TypographyScaleCalculator = () => {
                   <div className="mt-6">
                     <div className="flex items-center space-x-2 mb-4">
                       <Switch
-                        id="use-mobile-scale"
-                        checked={useMobileScale}
-                        onCheckedChange={setUseMobileScale}
+                        id="compare-scales"
+                        checked={compareScales}
+                        onCheckedChange={setCompareScales}
                       />
-                      <Label htmlFor="use-mobile-scale">Use Mobile Scale</Label>
+                      <Label htmlFor="compare-scales">Compare Scales</Label>
                     </div>
-                    {useMobileScale && (
+                    {compareScales && (
                       <div className="space-y-4 mt-4">
                         <div className="w-full">
-                          <Label htmlFor="mobileBaseSize" className="block mb-1">Mobile Base Size (px)</Label>
+                          <Label htmlFor="compareMinBaseSize" className="block mb-1">Compare Min Base Size (px)</Label>
                           <Input
-                            id="mobileBaseSize"
+                            id="compareMinBaseSize"
                             type="number"
-                            value={mobileBaseSize}
-                            onChange={(e) => setMobileBaseSize(Number(e.target.value))}
-                            className="w-full"
+                            value={compareMinBaseSize}
+                            onChange={(e) => setCompareMinBaseSize(Number(e.target.value))}
+                            className="w-full bg-neutral-800 text-neutral-100"
                           />
                         </div>
                         <div className="w-full">
-                          <Label htmlFor="mobileScale" className="block mb-1">Mobile Scale</Label>
-                          <Select value={selectedMobileScale} onValueChange={setSelectedMobileScale}>
-                            <SelectTrigger className="w-full">
-                              <SelectValue>{selectedMobileScale}</SelectValue>
+                          <Label htmlFor="compareMinScreenWidth" className="block mb-1">Compare Min Screen Width (px)</Label>
+                          <Input
+                            id="compareMinScreenWidth"
+                            type="number"
+                            value={compareMinScreenWidth}
+                            onChange={(e) => setCompareMinScreenWidth(Number(e.target.value))}
+                            className="w-full bg-neutral-800 text-neutral-100"
+                          />
+                        </div>
+                        <div className="w-full">
+                          <Label htmlFor="compareMinScaleRatio" className="block mb-1">Compare Min Scale Ratio</Label>
+                          <Select value={compareMinScaleRatio} onValueChange={setCompareMinScaleRatio}>
+                            <SelectTrigger className="w-full bg-neutral-800 text-neutral-100">
+                              <SelectValue>{compareMinScaleRatio}</SelectValue>
                             </SelectTrigger>
                             <SelectContent>
                               {Object.keys(scales).map((scale) => (
@@ -340,14 +353,39 @@ const TypographyScaleCalculator = () => {
                           </Select>
                         </div>
                         <div className="w-full">
-                          <Label htmlFor="breakpoint" className="block mb-1">Breakpoint (px)</Label>
+                          <Label htmlFor="compareMaxBaseSize" className="block mb-1">Compare Max Base Size (px)</Label>
                           <Input
-                            id="breakpoint"
+                            id="compareMaxBaseSize"
                             type="number"
-                            value={breakpoint}
-                            onChange={(e) => setBreakpoint(Number(e.target.value))}
-                            className="w-full"
+                            value={compareMaxBaseSize}
+                            onChange={(e) => setCompareMaxBaseSize(Number(e.target.value))}
+                            className="w-full bg-neutral-800 text-neutral-100"
                           />
+                        </div>
+                        <div className="w-full">
+                          <Label htmlFor="compareMaxScreenWidth" className="block mb-1">Compare Max Screen Width (px)</Label>
+                          <Input
+                            id="compareMaxScreenWidth"
+                            type="number"
+                            value={compareMaxScreenWidth}
+                            onChange={(e) => setCompareMaxScreenWidth(Number(e.target.value))}
+                            className="w-full bg-neutral-800 text-neutral-100"
+                          />
+                        </div>
+                        <div className="w-full">
+                          <Label htmlFor="compareMaxScaleRatio" className="block mb-1">Compare Max Scale Ratio</Label>
+                          <Select value={compareMaxScaleRatio} onValueChange={setCompareMaxScaleRatio}>
+                            <SelectTrigger className="w-full bg-neutral-800 text-neutral-100">
+                              <SelectValue>{compareMaxScaleRatio}</SelectValue>
+                            </SelectTrigger>
+                            <SelectContent>
+                              {Object.keys(scales).map((scale) => (
+                                <SelectItem key={scale} value={scale}>
+                                  {scale}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
                         </div>
                       </div>
                     )}
@@ -358,7 +396,7 @@ const TypographyScaleCalculator = () => {
                     <div className="w-full mb-4">
                       <Label htmlFor="presetGroup" className="block mb-1">Preset Group</Label>
                       <Select value={selectedPresetGroup} onValueChange={handlePresetGroupChange}>
-                        <SelectTrigger className="w-full">
+                        <SelectTrigger className="w-full bg-neutral-800 text-neutral-100">
                           <SelectValue>{selectedPresetGroup}</SelectValue>
                         </SelectTrigger>
                         <SelectContent>
@@ -378,7 +416,7 @@ const TypographyScaleCalculator = () => {
                             value={elementSteps[element].toString()}
                             onValueChange={(value) => handleElementStepChange(element, parseInt(value))}
                           >
-                            <SelectTrigger id={`step-${element}`} className="w-24">
+                            <SelectTrigger id={`step-${element}`} className="w-24 bg-neutral-800 text-neutral-100">
                               <SelectValue>{elementSteps[element]}</SelectValue>
                             </SelectTrigger>
                             <SelectContent>
@@ -398,7 +436,7 @@ const TypographyScaleCalculator = () => {
                 <div className="mt-4">
                   <Label htmlFor="theme-toggle">Theme</Label>
                   <Select value={theme} onValueChange={setTheme}>
-                    <SelectTrigger id="theme-toggle" className="w-full">
+                    <SelectTrigger id="theme-toggle" className="w-full bg-neutral-800 text-neutral-100">
                       <SelectValue>{theme}</SelectValue>
                     </SelectTrigger>
                     <SelectContent>
@@ -410,42 +448,30 @@ const TypographyScaleCalculator = () => {
                 </div>
               </div>
             </Panel>
-            <PanelResizeHandle className="w-2 bg-neutral-200 hover:bg-neutral-300 transition-colors" />
+            <PanelResizeHandle className="w-2 bg-neutral-700 hover:bg-neutral-600 transition-colors" />
             <Panel className="h-full">
-              <div className="p-4 h-full overflow-y-auto bg-neutral-100 dark:bg-neutral-900 text-neutral-900 dark:text-neutral-100">
+              <div className="p-4 h-full overflow-y-auto bg-neutral-900 text-neutral-100">
                 <Tabs defaultValue="scale" className="h-full flex flex-col">
                   <TabsList className="w-full">
                     <TabsTrigger value="scale" className="flex-1">Generated Scale</TabsTrigger>
                     <TabsTrigger value="preview" className="flex-1">Preview</TabsTrigger>
                     <TabsTrigger value="css" className="flex-1">CSS Output</TabsTrigger>
                   </TabsList>
-                  <TabsContent value="scale" className="flex-grow overflow-y-auto">
+                  <TabsContent value="scale" className="flex-grow overflow-y-auto px-4 py-4 mt-4">
                     <div className="space-y-2">
-                      <h3 className="font-semibold">Desktop Scale</h3>
+                      <h3 className="font-semibold">Scale</h3>
                       {generatedScale.map(({ step, size }) => (
                         <div key={step} className="flex justify-between items-center">
                           <span>Step {step}</span>
                           <code>{size}</code>
                         </div>
                       ))}
-                      {useMobileScale && (
-                        <>
-                          <h3 className="font-semibold mt-4">Mobile Scale</h3>
-                          {generatedMobileScale.map(({ step, size }) => (
-                            <div key={step} className="flex justify-between items-center">
-                              <span>Step {step}</span>
-                              <code>{size}</code>
-                            </div>
-                          ))}
-                        </>
-                      )}
                     </div>
                   </TabsContent>
-                  <TabsContent value="preview" className="flex-grow overflow-y-auto">
+                  <TabsContent value="preview" className="flex-grow overflow-y-auto px-4 py-4 mt-4">
                     <div style={{ fontFamily: selectedFont }} className="w-full">
                       <h2 className="text-2xl font-bold mb-4">Font Preview: {selectedFont}</h2>
                       <div className="w-full">
-                        <h3 className="font-semibold mb-2">Desktop</h3>
                         {htmlElements.map((element) => {
                           const step = elementSteps[element];
                           const scaleItem = generatedScale.find(item => item.step === step);
@@ -464,35 +490,13 @@ const TypographyScaleCalculator = () => {
                           );
                         })}
                       </div>
-                      {useMobileScale && (
-                        <div className="w-full mt-4">
-                          <h3 className="font-semibold mb-2">Mobile</h3>
-                          {htmlElements.map((element) => {
-                            const step = elementSteps[element];
-                            const scaleItem = generatedMobileScale.find(item => item.step === step);
-                            const Element = element === 'display' || element === 'title' || element === 'micro' ? 'div' : element;
-                            return (
-                              <Element
-                                key={element}
-                                className={`${element === 'display' || element === 'title' || element === 'micro' ? element : ''} w-full`}
-                                style={{ fontSize: scaleItem ? scaleItem.size : 'inherit' }}
-                                contentEditable
-                                onBlur={(e) => handlePreviewTextChange(element, e.target.textContent)}
-                                suppressContentEditableWarning={true}
-                              >
-                                {element}: {previewText}
-                              </Element>
-                            );
-                          })}
-                        </div>
-                      )}
                     </div>
                   </TabsContent>
-                  <TabsContent value="css" className="flex-grow h-full">
+                  <TabsContent value="css" className="flex-grow h-full px-4 py-4 mt-4">
                     <Textarea
                       value={cssOutput}
                       readOnly
-                      className="w-full h-full font-mono text-sm resize-none"
+                      className="w-full h-full font-mono text-sm resize-none bg-neutral-800 text-neutral-100"
                     />
                   </TabsContent>
                 </Tabs>
